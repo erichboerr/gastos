@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="ar.com.gastos.controller.EgresoController"
+      spacing="10" alignment="CENTER" style="-fx-padding:20;">
+
+    <Label text="Tarjeta"/>
+    <ComboBox fx:id="cmbTarjeta" promptText="Seleccione tarjeta" maxWidth="Infinity"/>
+
+    <Label text="Fecha"/>
+    <DatePicker fx:id="txtFecha" maxWidth="Infinity"/>
+
+    <!-- Descripción: ComboBox editable + botón para agregar nueva -->
+    <Label text="Descripción"/>
+    <HBox spacing="8" alignment="CENTER_LEFT">
+        <ComboBox fx:id="cmbDescripcion"
+                  promptText="Seleccione o escriba descripción"
+                  HBox.hgrow="ALWAYS"
+                  maxWidth="Infinity"/>
+        <Button text="+ Nueva" onAction="#nuevaDescripcion"/>
+    </HBox>
+
+    <Label text="Monto"/>
+    <TextField fx:id="txtMonto" promptText="0.00"/>
+
+    <Label text="Cuotas (dejar vacío = 1)"/>
+    <TextField fx:id="txtCuotas" promptText="1"/>
+
+    <Button text="Guardar" onAction="#guardarMovimiento" maxWidth="Infinity"/>
+</VBox>

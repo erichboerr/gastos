@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="ar.com.gastos.controller.PagoController"
+      spacing="10" alignment="CENTER" style="-fx-padding:20;">
+    <Label text="Tarjeta"/>
+    <ComboBox fx:id="cmbTarjeta" promptText="Seleccione tarjeta"/>
+
+    <Label text="Fecha"/>
+    <DatePicker fx:id="txtFecha"/>
+
+    <Label text="Descripción"/>
+    <TextField fx:id="txtDescripcion"/>
+
+    <Label text="Monto"/>
+    <TextField fx:id="txtMonto"/>
+
+    <Button text="Guardar" onAction="#guardarMovimiento"/>
+</VBox>

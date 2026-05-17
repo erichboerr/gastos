@@ -1,0 +1,42 @@
+.card {
+    -fx-background-color: #ecf0f1;
+    -fx-border-color: #bdc3c7;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 20;
+    -fx-alignment: center;
+}
+
+.card-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+    -fx-padding: 0 0 10 0; /* 🔹 espacio debajo del título */
+}
+
+.card-body {
+    -fx-font-size: 16px;
+    -fx-text-fill: #34495e;
+    -fx-padding: 1 0; /* 🔹 menos espacio vertical entre labels */
+}
+
+.separator {
+    -fx-background-color: #bdc3c7;
+    -fx-pref-height: 1; /* 🔹 raya fina */
+    -fx-opacity: 0.6;
+
+}
+
+.button {
+    -fx-background-color: #3498db;   /* azul */
+    -fx-text-fill: white;            /* texto blanco */
+    -fx-font-size: 16px;             /* tamaño de fuente */
+    -fx-font-weight: bold;           /* negrita */
+    -fx-background-radius: 8;        /* bordes redondeados */
+    -fx-padding: 10 20;              /* espacio interno */
+}
+
+.button:hover {
+    -fx-background-color: #2980b9;   /* azul más oscuro al pasar el mouse */
+    -fx-cursor: hand;
+}

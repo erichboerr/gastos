@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="ar.com.gastos.controller.NuevaTarjetaController"
+      spacing="12" alignment="CENTER" style="-fx-padding:24;">
+
+    <Label text="Nueva Tarjeta"
+           style="-fx-font-size:16; -fx-font-weight:bold; -fx-text-fill:#2c3e50;"/>
+
+    <Separator/>
+
+    <Label text="Nombre de la tarjeta"/>
+    <TextField fx:id="txtNombre"
+               promptText="Ej: MASTERCARD CIUDAD ERICH"
+               maxWidth="Infinity"/>
+
+    <Label text="Tipo"/>
+    <HBox spacing="8" alignment="CENTER_LEFT">
+        <ComboBox fx:id="cmbTipo"
+                  promptText="Seleccione o escriba el tipo"
+                  HBox.hgrow="ALWAYS"
+                  maxWidth="Infinity"/>
+        <Button text="+ Nuevo" onAction="#nuevoTipo"/>
+    </HBox>
+
+    <Separator/>
+
+    <Button text="Guardar tarjeta"
+            onAction="#guardarTarjeta"
+            maxWidth="Infinity"
+            style="-fx-background-color:#2c3e50; -fx-text-fill:white; -fx-font-weight:bold;"/>
+
+</VBox>

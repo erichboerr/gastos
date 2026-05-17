@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="ar.com.gastos.controller.CierreTarjetaController"
+      spacing="10" alignment="CENTER" style="-fx-padding:20;"
+      prefWidth="400" prefHeight="300">
+
+    <Label text="Tarjeta"/>
+    <ComboBox fx:id="cmbTarjeta" promptText="Seleccione tarjeta"/>
+
+    <Label text="Mes"/>
+    <DatePicker fx:id="dpMes"/>
+
+    <Label text="Fecha de cierre"/>
+    <DatePicker fx:id="dpCierre"/>
+
+    <Label text="Fecha de vencimiento"/>
+    <DatePicker fx:id="dpVencimiento"/>
+
+    <Button text="Guardar" onAction="#guardarCierre"/>
+</VBox>

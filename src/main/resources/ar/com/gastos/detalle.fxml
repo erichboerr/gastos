@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="ar.com.gastos.controller.DetalleController">
+    <top>
+        <Label fx:id="lblTitulo" text="Detalle de movimientos" style="-fx-font-size:16; -fx-padding:10;"/>
+    </top>
+    <center>
+        <TableView fx:id="tablaMovimientos">
+            <columns>
+                <TableColumn fx:id="colFecha" text="Fecha" prefWidth="120"/>
+                <TableColumn fx:id="colDescripcion" text="Descripción" prefWidth="250"/>
+                <TableColumn fx:id="colMonto" text="Monto" prefWidth="120"/>
+                <TableColumn fx:id="colCuota" text="Cuota" prefWidth="100"/>
+            </columns>
+        </TableView>
+    </center>
+</BorderPane>

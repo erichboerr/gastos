@@ -1,0 +1,25 @@
+module ar.com.gastos.gastos {
+    requires javafx.controls;
+    requires javafx.fxml;
+    requires javafx.web;
+
+    requires java.sql;
+
+    requires org.slf4j;
+    requires com.zaxxer.hikari;
+
+    requires org.controlsfx.controls;
+    requires com.dlsc.formsfx;
+    requires net.synedra.validatorfx;
+    requires org.kordamp.ikonli.javafx;
+    requires org.kordamp.bootstrapfx.core;
+    requires eu.hansolo.tilesfx;
+
+    exports ar.com.gastos;
+
+    // Abrí los paquetes de los controladores para que FXMLLoader pueda inyectar
+    opens ar.com.gastos to javafx.fxml;
+    opens ar.com.gastos.controller to javafx.fxml;
+    opens ar.com.gastos.model to javafx.base;
+    opens ar.com.gastos.util to javafx.base;
+}
