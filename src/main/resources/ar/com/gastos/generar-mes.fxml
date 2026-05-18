@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="ar.com.gastos.controller.GenerarMesController"
+      spacing="12" alignment="TOP_CENTER" style="-fx-padding:20;">
+
+    <Label text="Generar Gastos del Mes"
+           style="-fx-font-size:16; -fx-font-weight:bold; -fx-text-fill:#2c3e50;"/>
+
+    <Separator/>
+
+    <!-- Selector de mes -->
+    <Label text="Mes a generar"/>
+    <DatePicker fx:id="dpMes" maxWidth="Infinity"/>
+
+    <Separator/>
+
+    <!-- Lista de recurrentes con monto editable -->
+    <Label text="Gastos recurrentes (DÉBITO / EFECTIVO)"/>
+    <ListView fx:id="lstItems" prefHeight="250"/>
+
+    <Separator/>
+
+    <!-- Botón generar -->
+    <Button text="Generar egresos"
+            onAction="#generarEgresos"
+            maxWidth="Infinity"
+            style="-fx-background-color:#2c3e50; -fx-text-fill:white; -fx-font-weight:bold;"/>
+
+</VBox>

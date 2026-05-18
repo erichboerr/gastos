@@ -42,6 +42,8 @@
             <Button text="Ingresos"       onAction="#abrirIngreso"       maxWidth="Infinity"/>
             <Button text="Egresos"        onAction="#abrirEgreso"        maxWidth="Infinity"/>
             <Button text="Pagos"          onAction="#abrirPago"          maxWidth="Infinity"/>
+            <Button text="Recurrentes" onAction="#abrirRecurrentes" maxWidth="Infinity"/>
+            <Button text="Generar Mes" onAction="#abrirGenerarMes" maxWidth="Infinity"/>
             <Button text="Cierres"        onAction="#abrirCierreTarjeta" maxWidth="Infinity"/>
             <Separator/>
             <Button text="Resumen Anual"  onAction="#abrirResumenAnual"  maxWidth="Infinity"/>

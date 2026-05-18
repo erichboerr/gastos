@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="ar.com.gastos.controller.GastosRecurrentesController"
+      spacing="12" alignment="TOP_CENTER" style="-fx-padding:20;">
+
+    <Label text="Gastos Recurrentes"
+           style="-fx-font-size:16; -fx-font-weight:bold; -fx-text-fill:#2c3e50;"/>
+
+    <Separator/>
+
+    <!-- Formulario de alta / edición -->
+    <Label text="Descripción"/>
+    <TextField fx:id="txtDescripcion" promptText="Ej: ABSA, Combustible, Celular" maxWidth="Infinity"/>
+
+    <Label text="Categoría"/>
+    <TextField fx:id="txtCategoria" promptText="Ej: Servicios, Transporte" maxWidth="Infinity"/>
+
+    <Label text="Medio de pago"/>
+    <ComboBox fx:id="cmbMedioPago" maxWidth="Infinity"/>
+
+    <HBox spacing="8">
+        <Button text="Guardar" onAction="#guardar"
+                style="-fx-background-color:#2c3e50; -fx-text-fill:white; -fx-font-weight:bold;"
+                HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+        <Button text="Limpiar" onAction="#limpiar" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+    </HBox>
+
+    <Separator/>
+
+    <!-- Lista de recurrentes existentes -->
+    <Label text="Recurrentes cargados"/>
+    <ListView fx:id="lstRecurrentes" prefHeight="200"/>
+
+    <HBox spacing="8">
+        <Button text="Editar seleccionado"  onAction="#editar"  HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+        <Button text="Eliminar seleccionado" onAction="#eliminar" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+    </HBox>
+
+</VBox>

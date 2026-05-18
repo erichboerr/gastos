@@ -1,8 +1,11 @@
 package ar.com.gastos.controller;
 
 import ar.com.gastos.dao.IngresoDao;
+import ar.com.gastos.util.MovimientoEventBus;
 import ar.com.gastos.util.Toast;
 import javafx.fxml.FXML;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
@@ -16,18 +19,31 @@ public class IngresoController {
 
   private static final Logger logger = LoggerFactory.getLogger(IngresoController.class);
 
+  @FXML private ComboBox<String> cmbTipoIngreso;
+  @FXML private DatePicker dpFecha;
+  @FXML private TextField txtMonto;
+
   @FXML
-  private TextField txtTipoIngreso;
-  @FXML
-  private TextField txtMonto;
+  public void initialize() {
+    // Tipos de ingreso predefinidos — editables por el usuario
+    cmbTipoIngreso.getItems().addAll(
+        "Sueldo Erich",
+        "Sueldo Lorena",
+        "Lucía",
+        "Frasco"
+    );
+    // Fecha por defecto: hoy
+    dpFecha.setValue(LocalDate.now());
+  }
 
   @FXML
   private void guardarIngreso() {
-    String tipo = txtTipoIngreso.getText();
+    String tipo = cmbTipoIngreso.getEditor().getText().trim();
     String montoStr = txtMonto.getText();
+    LocalDate fecha = dpFecha.getValue();
 
-    if (tipo == null || tipo.isEmpty() || montoStr == null || montoStr.isEmpty()) {
-      Toast.show((Stage) txtTipoIngreso.getScene().getWindow(), "Debe completar todos los campos");
+    if (tipo.isEmpty() || montoStr == null || montoStr.isEmpty() || fecha == null) {
+      Toast.show((Stage) txtMonto.getScene().getWindow(), "Debe completar todos los campos");
       return;
     }
 
@@ -35,21 +51,22 @@ public class IngresoController {
       BigDecimal monto = new BigDecimal(montoStr).setScale(2);
 
       IngresoDao ingresoDao = new IngresoDao();
-      ingresoDao.insertarIngreso(tipo, monto, LocalDate.now());
+      ingresoDao.insertarIngreso(tipo, monto, fecha);
 
-      Toast.show((Stage) txtTipoIngreso.getScene().getWindow(), "Ingreso registrado");
-      logger.info("Ingreso registrado: {} - ${}", tipo, monto);
+      Toast.show((Stage) txtMonto.getScene().getWindow(), "Ingreso registrado");
+      logger.info("Ingreso registrado: {} - ${} - {}", tipo, monto, fecha);
 
-      ((Stage) txtTipoIngreso.getScene().getWindow()).close();
+      MovimientoEventBus.publish("ingreso");
+
+      ((Stage) txtMonto.getScene().getWindow()).close();
 
     } catch (NumberFormatException ex) {
-      Toast.show((Stage) txtTipoIngreso.getScene().getWindow(), "Monto inválido");
+      Toast.show((Stage) txtMonto.getScene().getWindow(), "Monto inválido");
       logger.error("Error al parsear monto", ex);
 
-    } catch (SQLException ex) {   // 🔹 capturamos SQLException
-      Toast.show((Stage) txtTipoIngreso.getScene().getWindow(), "Error al guardar ingreso");
+    } catch (SQLException ex) {
+      Toast.show((Stage) txtMonto.getScene().getWindow(), "Error al guardar ingreso");
       logger.error("Error al guardar ingreso", ex);
     }
-
   }
 }

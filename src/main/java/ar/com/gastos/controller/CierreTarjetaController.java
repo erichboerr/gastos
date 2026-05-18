@@ -17,7 +17,7 @@ import java.util.List;
 
 public class CierreTarjetaController {
 
-  private static final Logger logger = LoggerFactory.getLogger(EgresoController.class);
+  private static final Logger logger = LoggerFactory.getLogger(CierreTarjetaController.class);
 
   @FXML private ComboBox<String> cmbTarjeta;
   @FXML private DatePicker dpMes;
@@ -60,7 +60,7 @@ public class CierreTarjetaController {
       Toast.show((Stage) dpMes.getScene().getWindow(), "Cierre guardado correctamente");
     } catch (SQLException ex) {
       Toast.show((Stage) dpMes.getScene().getWindow(), "Error al guardar cierre");
-      logger.info("Cierre guardado correctamente", ex);
+      logger.error("Error al guardar cierre", ex);
     }
   }
 }

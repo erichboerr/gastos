@@ -44,6 +44,7 @@ public class Tarjeta {
     this.restaAbonar = restaAbonar;      // ← esto faltaba
   }
 
+
   // --- Getters y setters ---
 
   public int getId() {

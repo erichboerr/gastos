@@ -6,7 +6,8 @@
 <VBox xmlns:fx="http://javafx.com/fxml" fx:controller="ar.com.gastos.controller.IngresoController"
       spacing="10" alignment="CENTER" style="-fx-padding:20;">
     <Label text="Registrar Ingreso" style="-fx-font-size:18; -fx-font-weight:bold;"/>
-    <TextField fx:id="txtTipoIngreso" promptText="Tipo de ingreso (ej: Sueldo, Venta)"/>
+    <ComboBox fx:id="cmbTipoIngreso" promptText="Tipo de ingreso" editable="true" maxWidth="Infinity"/>
+    <DatePicker fx:id="dpFecha" promptText="Fecha" maxWidth="Infinity"/>
     <TextField fx:id="txtMonto" promptText="Monto"/>
     <Button text="Guardar" onAction="#guardarIngreso"/>
 </VBox>

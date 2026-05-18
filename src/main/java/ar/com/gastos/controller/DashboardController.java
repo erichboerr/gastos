@@ -73,11 +73,13 @@ public class DashboardController {
 
   // --- Apertura de formularios ---
 
-  @FXML private void abrirNuevaTarjeta()  { abrirFormulario("/ar/com/gastos/nueva-tarjeta.fxml", "Nueva Tarjeta"); }
-  @FXML private void abrirIngreso()       { abrirFormulario("/ar/com/gastos/ingreso.fxml",       "Nuevo Ingreso"); }
-  @FXML private void abrirEgreso()        { abrirFormulario("/ar/com/gastos/egreso.fxml",        "Nuevo Egreso"); }
-  @FXML private void abrirPago()          { abrirFormulario("/ar/com/gastos/pago.fxml",          "Registrar Pago"); }
-  @FXML private void abrirCierreTarjeta() { abrirFormulario("/ar/com/gastos/CierreTarjeta.fxml", "Cierre de Tarjeta"); }
+  @FXML private void abrirNuevaTarjeta()  { abrirFormulario("/ar/com/gastos/nueva-tarjeta.fxml",      "Nueva Tarjeta"); }
+  @FXML private void abrirIngreso()       { abrirFormulario("/ar/com/gastos/ingreso.fxml",            "Nuevo Ingreso"); }
+  @FXML private void abrirEgreso()        { abrirFormulario("/ar/com/gastos/egreso.fxml",             "Nuevo Egreso"); }
+  @FXML private void abrirPago()          { abrirFormulario("/ar/com/gastos/pago.fxml",               "Registrar Pago"); }
+  @FXML private void abrirCierreTarjeta() { abrirFormulario("/ar/com/gastos/CierreTarjeta.fxml",      "Cierre de Tarjeta"); }
+  @FXML private void abrirRecurrentes()   { abrirFormulario("/ar/com/gastos/gastos-recurrentes.fxml", "Gastos Recurrentes"); }
+  @FXML private void abrirGenerarMes()    { abrirFormulario("/ar/com/gastos/generar-mes.fxml",        "Generar Mes"); }
 
   // Abre la ventana de resumen anual para el año del mes visible
   @FXML
@@ -96,6 +98,7 @@ public class DashboardController {
     }
   }
 
+  // Método genérico para abrir cualquier formulario en una nueva ventana modal
   private void abrirFormulario(String fxmlPath, String titulo) {
     try {
       FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
@@ -122,10 +125,11 @@ public class DashboardController {
     lblMesNavegacion.setText(nombreMesCap + " " + mesVisible.getYear());
 
     try {
-      TarjetaDao tarjetaDao       = new TarjetaDao();
+      TarjetaDao tarjetaDao     = new TarjetaDao();
       MovimientoDao movimientoDao = new MovimientoDao();
-      IngresoDao ingresoDao       = new IngresoDao();
+      IngresoDao ingresoDao     = new IngresoDao();
       CierreTarjetaDao cierreDao  = new CierreTarjetaDao();
+      CuotaDao cuotaDao         = new CuotaDao();
 
       List<Tarjeta> tarjetas = tarjetaDao.findAllActivas();
 
@@ -137,14 +141,22 @@ public class DashboardController {
           .sum();
 
       double totalEgresos = 0;
+      double totalPagos   = 0;
 
       for (Tarjeta t : tarjetas) {
+
+        // FIX: usamos mesVisible en lugar de YearMonth.now() para que
+        // la navegación por mes y el EventBus recarguen correctamente.
         CierreTarjeta cierreMes = cierreDao.findCierrePorMes(t.getId(), mesVisible);
 
         if (cierreMes != null) {
+
+          // Buscamos el cierre anterior para determinar el inicio del período
           CierreTarjeta cierreAnterior = cierreDao.findAnteriorPorTarjeta(
               t.getId(), cierreMes.getFechaCierre());
 
+          // Si hay cierre anterior: el período arranca el día siguiente a ese cierre.
+          // Si no hay cierre anterior: arranca desde el primer día del mes del cierre.
           LocalDate desde = (cierreAnterior != null)
               ? cierreAnterior.getFechaCierre().plusDays(1)
               : cierreMes.getMes();
@@ -155,15 +167,34 @@ public class DashboardController {
 
           List<Movimiento> movimientos = movimientoDao.findByTarjetaEnRango(t.getId(), desde, hasta);
 
-          BigDecimal totalPeriodo = BigDecimal.ZERO;
-          BigDecimal pagosPeriodo = BigDecimal.ZERO;
+          BigDecimal totalPeriodo  = BigDecimal.ZERO;
+          BigDecimal pagosPeriodo  = BigDecimal.ZERO;
 
           for (Movimiento m : movimientos) {
+
             if ("EGRESO".equals(m.getCategoria())) {
-              totalPeriodo = totalPeriodo.add(m.getMonto());
-              totalEgresos += m.getMonto().doubleValue();
+
+              if (m.getCuotas() == 1) {
+                // Pago único — suma el monto del movimiento directamente
+                totalPeriodo = totalPeriodo.add(m.getMonto());
+                totalEgresos += m.getMonto().doubleValue();
+
+              } else {
+                // En cuotas — buscamos cuáles vencen dentro del período del cierre
+                List<Cuota> cuotas = cuotaDao.findByMovimiento(m.getId());
+                for (Cuota c : cuotas) {
+                  if (!c.getFechaVencimiento().isBefore(desde) &&
+                      !c.getFechaVencimiento().isAfter(hasta)) {
+                    totalPeriodo = totalPeriodo.add(c.getMonto());
+                    totalEgresos += c.getMonto().doubleValue();
+                  }
+                }
+              }
+
             } else if ("PAGO".equals(m.getCategoria())) {
+              // Pagos realizados a la tarjeta en el período
               pagosPeriodo = pagosPeriodo.add(m.getMonto());
+              totalPagos  += m.getMonto().doubleValue();
             }
           }
 
@@ -182,7 +213,7 @@ public class DashboardController {
       lblEgresos.setText("Egresos: "   + CURRENCY.format(totalEgresos));
       lblBalance.setText("Balance: "   + CURRENCY.format(balance));
 
-      // Card de ingresos y cards de tarjetas
+      // Card de ingresos arriba y cards de tarjetas en grilla
       cardIngresos.getChildren().add(crearCardIngresos(totalIngresos));
 
       int col = 0, row = 0;
@@ -244,6 +275,7 @@ public class DashboardController {
     return card;
   }
 
+  // Crea el botón "Ver detalle" que abre una nueva ventana con el movimiento de la tarjeta
   private Button crearBotonDetalle(Tarjeta t) {
     Button btn = new Button("Ver detalle");
     btn.setOnAction(e -> {

@@ -97,13 +97,11 @@ CREATE TABLE IF NOT EXISTS ingreso (
 --   fecha_vencimiento→ fecha límite de pago (ej: 2026-06-04)
 -- -------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS cierres_tarjeta (
-    id_cierre          SERIAL  PRIMARY KEY,
-    id                 INTEGER NOT NULL REFERENCES tarjeta(id),  -- tarjeta_id
-    mes                DATE    NOT NULL,
-    fecha_cierre       DATE    NOT NULL,
-    fecha_vencimiento  DATE    NOT NULL,
-
-    -- Evita duplicados: una sola entrada por tarjeta por mes
+    id_cierre          SERIAL PRIMARY KEY,
+    id                 INTEGER NOT NULL REFERENCES tarjeta(id),
+    mes                DATE NOT NULL,
+    fecha_cierre       DATE NOT NULL,
+    fecha_vencimiento  DATE NOT NULL,
     CONSTRAINT uq_cierre_tarjeta_mes UNIQUE (id, mes)
 );
 
@@ -122,3 +120,10 @@ INSERT INTO tarjeta (nombre, tipo, habilitado) VALUES
 --     ('Master Ciudad Erich',   'Mastercard', TRUE),
 --     ('Mercado Pago',          'Prepaga',    TRUE),
 --     ('Naranja X',             'Naranja',    TRUE);
+
+CREATE TABLE IF NOT EXISTS gastos_recurrentes (
+    id          SERIAL PRIMARY KEY,
+    descripcion VARCHAR(100) NOT NULL,
+    categoria   VARCHAR(50),
+    medio_pago  VARCHAR(20) NOT NULL  -- 'DEBITO', 'CREDITO', 'EFECTIVO'
+);

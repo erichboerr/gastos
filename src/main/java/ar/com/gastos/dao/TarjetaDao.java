@@ -76,6 +76,26 @@ public class TarjetaDao {
     return tipos;
   }
 
+  /** Retorna la primera tarjeta activa que coincide con el tipo dado */
+  public Tarjeta findByTipo(String tipo) throws SQLException {
+    String sql = "SELECT id, nombre, tipo, habilitado FROM tarjeta WHERE tipo = ? AND habilitado = TRUE LIMIT 1";
+    try (Connection conn = Db.getDataSource().getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setString(1, tipo);
+      try (ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) {
+          return new Tarjeta(
+              rs.getInt("id"),
+              rs.getString("nombre"),
+              rs.getString("tipo"),
+              rs.getBoolean("habilitado")
+          );
+        }
+      }
+    }
+    return null;
+  }
+
   public void darDeBaja(int id) throws SQLException {
     String sql = "UPDATE tarjeta SET habilitado = FALSE WHERE id = ?";
     try (Connection c = Db.getDataSource().getConnection();
