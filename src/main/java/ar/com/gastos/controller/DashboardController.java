@@ -12,6 +12,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -26,6 +27,7 @@ import java.time.YearMonth;
 import java.time.format.TextStyle;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
 
 public class DashboardController {
 
@@ -42,19 +44,35 @@ public class DashboardController {
     CURRENCY.setMaximumFractionDigits(2);
   }
 
-  @FXML private Label lblBalance;
-  @FXML private Label lblIngresos;
-  @FXML private Label lblEgresos;
-  @FXML private Label lblMesNavegacion;
-  @FXML private GridPane cardsPane;
-  @FXML private VBox cardIngresos;
+  @FXML
+  private Label lblBalance;
+  @FXML
+  private Label lblIngresos;
+  @FXML
+  private Label lblEgresos;
+  @FXML
+  private Label lblMesNavegacion;
+  @FXML
+  private GridPane cardsPane;
+  @FXML
+  private VBox cardIngresos;
+
+  private Consumer<String> subscriber;
 
   @FXML
   public void initialize() {
     recargarDashboard();
-    // Cada vez que se guarda un movimiento en cualquier formulario,
-    // el EventBus dispara este callback y recargamos el dashboard.
-    MovimientoEventBus.subscribe(nombre -> Platform.runLater(this::recargarDashboard));
+
+    // Guardamos la referencia para poder desuscribir cuando se cierre la ventana
+    subscriber = nombre -> Platform.runLater(this::recargarDashboard);
+    MovimientoEventBus.subscribe(subscriber);
+
+    // Cuando el dashboard se cierra, limpiamos el subscriber
+    // para que no queden referencias acumuladas en el EventBus
+    Platform.runLater(() -> {
+      Stage stage = (Stage) lblBalance.getScene().getWindow();
+      stage.setOnCloseRequest(e -> MovimientoEventBus.unsubscribe(subscriber));
+    });
   }
 
   // --- Navegación por mes ---
@@ -73,13 +91,40 @@ public class DashboardController {
 
   // --- Apertura de formularios ---
 
-  @FXML private void abrirNuevaTarjeta()  { abrirFormulario("/ar/com/gastos/nueva-tarjeta.fxml",      "Nueva Tarjeta"); }
-  @FXML private void abrirIngreso()       { abrirFormulario("/ar/com/gastos/ingreso.fxml",            "Nuevo Ingreso"); }
-  @FXML private void abrirEgreso()        { abrirFormulario("/ar/com/gastos/egreso.fxml",             "Nuevo Egreso"); }
-  @FXML private void abrirPago()          { abrirFormulario("/ar/com/gastos/pago.fxml",               "Registrar Pago"); }
-  @FXML private void abrirCierreTarjeta() { abrirFormulario("/ar/com/gastos/CierreTarjeta.fxml",      "Cierre de Tarjeta"); }
-  @FXML private void abrirRecurrentes()   { abrirFormulario("/ar/com/gastos/gastos-recurrentes.fxml", "Gastos Recurrentes"); }
-  @FXML private void abrirGenerarMes()    { abrirFormulario("/ar/com/gastos/generar-mes.fxml",        "Generar Mes"); }
+  @FXML
+  private void abrirNuevaTarjeta() {
+    abrirFormulario("/ar/com/gastos/nueva-tarjeta.fxml", "Nueva Tarjeta");
+  }
+
+  @FXML
+  private void abrirIngreso() {
+    abrirFormulario("/ar/com/gastos/ingreso.fxml", "Nuevo Ingreso");
+  }
+
+  @FXML
+  private void abrirEgreso() {
+    abrirFormulario("/ar/com/gastos/egreso.fxml", "Nuevo Egreso");
+  }
+
+  @FXML
+  private void abrirPago() {
+    abrirFormulario("/ar/com/gastos/pago.fxml", "Registrar Pago");
+  }
+
+  @FXML
+  private void abrirCierreTarjeta() {
+    abrirFormulario("/ar/com/gastos/CierreTarjeta.fxml", "Cierre de Tarjeta");
+  }
+
+  @FXML
+  private void abrirRecurrentes() {
+    abrirFormulario("/ar/com/gastos/gastos-recurrentes.fxml", "Gastos Recurrentes");
+  }
+
+  @FXML
+  private void abrirGenerarMes() {
+    abrirFormulario("/ar/com/gastos/generar-mes.fxml", "Generar Mes");
+  }
 
   // Abre la ventana de resumen anual para el año del mes visible
   @FXML
@@ -125,11 +170,11 @@ public class DashboardController {
     lblMesNavegacion.setText(nombreMesCap + " " + mesVisible.getYear());
 
     try {
-      TarjetaDao tarjetaDao     = new TarjetaDao();
+      TarjetaDao tarjetaDao = new TarjetaDao();
       MovimientoDao movimientoDao = new MovimientoDao();
-      IngresoDao ingresoDao     = new IngresoDao();
-      CierreTarjetaDao cierreDao  = new CierreTarjetaDao();
-      CuotaDao cuotaDao         = new CuotaDao();
+      IngresoDao ingresoDao = new IngresoDao();
+      CierreTarjetaDao cierreDao = new CierreTarjetaDao();
+      CuotaDao cuotaDao = new CuotaDao();
 
       List<Tarjeta> tarjetas = tarjetaDao.findAllActivas();
 
@@ -141,7 +186,7 @@ public class DashboardController {
           .sum();
 
       double totalEgresos = 0;
-      double totalPagos   = 0;
+      double totalPagos = 0;
 
       for (Tarjeta t : tarjetas) {
 
@@ -165,10 +210,10 @@ public class DashboardController {
 
           logger.debug("Tarjeta [{}] — período desde: {} hasta: {}", t.getNombre(), desde, hasta);
 
-          List<Movimiento> movimientos = movimientoDao.findByTarjetaEnRango(t.getId(), desde, hasta);
+          List<Movimiento> movimientos = movimientoDao.findByTarjetaEnRangoPeriodo(t.getId(), desde, hasta);
 
-          BigDecimal totalPeriodo  = BigDecimal.ZERO;
-          BigDecimal pagosPeriodo  = BigDecimal.ZERO;
+          BigDecimal totalPeriodo = BigDecimal.ZERO;
+          BigDecimal pagosPeriodo = BigDecimal.ZERO;
 
           for (Movimiento m : movimientos) {
 
@@ -194,7 +239,7 @@ public class DashboardController {
             } else if ("PAGO".equals(m.getCategoria())) {
               // Pagos realizados a la tarjeta en el período
               pagosPeriodo = pagosPeriodo.add(m.getMonto());
-              totalPagos  += m.getMonto().doubleValue();
+              totalPagos += m.getMonto().doubleValue();
             }
           }
 
@@ -210,8 +255,8 @@ public class DashboardController {
 
       // Actualizamos los tres labels del header
       lblIngresos.setText("Ingresos: " + CURRENCY.format(totalIngresos));
-      lblEgresos.setText("Egresos: "   + CURRENCY.format(totalEgresos));
-      lblBalance.setText("Balance: "   + CURRENCY.format(balance));
+      lblEgresos.setText("Egresos: " + CURRENCY.format(totalEgresos));
+      lblBalance.setText("Balance: " + CURRENCY.format(balance));
 
       // Card de ingresos arriba y cards de tarjetas en grilla
       cardIngresos.getChildren().add(crearCardIngresos(totalIngresos));
@@ -220,7 +265,10 @@ public class DashboardController {
       for (Tarjeta t : tarjetas) {
         cardsPane.add(crearCard(t), col, row);
         col++;
-        if (col == 3) { col = 0; row++; }
+        if (col == 3) {
+          col = 0;
+          row++;
+        }
       }
 
     } catch (Exception ex) {
@@ -260,17 +308,28 @@ public class DashboardController {
     Label lblGastos = new Label("Gastos del mes: " + CURRENCY.format(t.getTotalGastado()));
     lblGastos.getStyleClass().add("card-body");
 
-    Label lblPagos  = new Label("Pagos del mes: "  + CURRENCY.format(t.getTotalPagado()));
+    Label lblPagos = new Label("Pagos del mes: " + CURRENCY.format(t.getTotalPagado()));
     lblPagos.getStyleClass().add("card-body");
 
-    Label lblResta  = new Label("Resta abonar: "   + CURRENCY.format(t.getRestaAbonar()));
+    Label lblResta = new Label("Resta abonar: " + CURRENCY.format(t.getRestaAbonar()));
     lblResta.getStyleClass().add("card-body");
 
     Button btnDetalle = crearBotonDetalle(t);
     btnDetalle.getStyleClass().add("card-footer");
+    HBox.setHgrow(btnDetalle, javafx.scene.layout.Priority.ALWAYS);
+    btnDetalle.setMaxWidth(Double.MAX_VALUE);
+
+    Button btnEditar = crearBotonEditarTarjeta(t);
+    btnEditar.getStyleClass().add("card-footer");
+    HBox.setHgrow(btnEditar, javafx.scene.layout.Priority.ALWAYS);
+    btnEditar.setMaxWidth(Double.MAX_VALUE);
+
+    HBox hboxBotones = new HBox(6, btnDetalle, btnEditar);
+    hboxBotones.setMaxWidth(Double.MAX_VALUE);
 
     card.getChildren().addAll(lblNombre, new Separator(),
-        lblGastos, lblPagos, lblResta, new Separator(), btnDetalle);
+        lblGastos, lblPagos, lblResta, new Separator(), hboxBotones);
+
     card.setStyle("-fx-padding:20; -fx-alignment:center;");
     return card;
   }
@@ -281,7 +340,7 @@ public class DashboardController {
     btn.setOnAction(e -> {
       try {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/ar/com/gastos/detalle.fxml"));
-        Scene scene = new Scene(loader.load(), 600, 400);
+        Scene scene = new Scene(loader.load(), 650, 400);
         DetalleController ctrl = loader.getController();
         ctrl.setTarjeta(t);
         Stage stage = new Stage();
@@ -290,6 +349,26 @@ public class DashboardController {
         stage.show();
       } catch (IOException ex) {
         logger.error("Error al abrir detalle de tarjeta: {}", t.getNombre(), ex);
+      }
+    });
+    return btn;
+  }
+
+  private Button crearBotonEditarTarjeta(Tarjeta t) {
+    Button btn = new Button("Editar / Eliminar");
+    btn.setOnAction(e -> {
+      try {
+        FXMLLoader loader = new FXMLLoader(
+            getClass().getResource("/ar/com/gastos/editar-tarjeta.fxml"));
+        Scene scene = new Scene(loader.load(), 400, 320);
+        EditarTarjetaController ctrl = loader.getController();
+        ctrl.setTarjeta(t);
+        Stage stage = new Stage();
+        stage.setTitle("Editar Tarjeta");
+        stage.setScene(scene);
+        stage.show();
+      } catch (IOException ex) {
+        logger.error("Error al abrir editar tarjeta", ex);
       }
     });
     return btn;

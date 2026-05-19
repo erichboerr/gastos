@@ -19,7 +19,7 @@ public class PagoDao {
 
       ps.setInt(1, m.getTarjetaId());
       ps.setDate(2, java.sql.Date.valueOf(m.getFecha()));
-      ps.setString(3, m.getDescripcion());
+      ps.setString(3, m.getDescripcion().toUpperCase());
       ps.setBigDecimal(4, m.getMonto().setScale(2));
       ps.setString(5, "PAGO"); // 🔹 categoría fija
       ps.setString(6, m.getMoneda());
@@ -32,7 +32,7 @@ public class PagoDao {
   // Listar todos los ingresos de una tarjeta
   public List<Movimiento> findByTarjeta(int tarjetaId) throws SQLException {
     List<Movimiento> list = new ArrayList<>();
-    String sql = "SELECT * FROM movimiento WHERE tarjeta_id = ? AND categoria = 'INGRESO' ORDER BY fecha DESC";
+    String sql = "SELECT * FROM movimiento WHERE tarjeta_id = ? AND categoria = 'PAGO' ORDER BY fecha DESC";
 
     try (Connection c = Db.getDataSource().getConnection();
          PreparedStatement ps = c.prepareStatement(sql)) {

@@ -32,7 +32,7 @@ public class Tarjeta {
 
   /**
    * Constructor auxiliar — usado cuando se construye una Tarjeta ya con sus totales calculados.
-   *
+   * <p>
    * BUG CORREGIDO: el constructor anterior recibía totalPagado y restaAbonar como parámetros
    * pero nunca los asignaba a los campos del objeto. Quedaban en 0.0 silenciosamente.
    */
@@ -51,15 +51,27 @@ public class Tarjeta {
     return id;
   }
 
+  public void setNombre(String nombre) {
+    this.nombre = nombre;
+  }
+
   public String getNombre() {
     return nombre;
+  }
+
+  public void setTipo(String tipo) {
+    this.tipo = tipo;
   }
 
   public String getTipo() {
     return tipo;
   }
 
-  public boolean isHabilitado() {
+  public void setHabilitado(boolean habilitado) {
+    this.habilitado = habilitado;
+  }
+
+  public boolean getHabilitado() {
     return habilitado;
   }
 
@@ -79,11 +91,11 @@ public class Tarjeta {
     this.totalPagado = totalPagado;
   }
 
-  public double getRestaAbonar() {
-    return restaAbonar;
-  }
-
   public void setRestaAbonar(double restaAbonar) {
     this.restaAbonar = restaAbonar;
+  }
+
+  public double getRestaAbonar() {
+    return restaAbonar;
   }
 }

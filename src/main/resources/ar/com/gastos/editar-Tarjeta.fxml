@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="ar.com.gastos.controller.EditarTarjetaController"
+      spacing="12" alignment="TOP_CENTER" style="-fx-padding:20;">
+
+    <Label text="Editar Tarjeta"
+           style="-fx-font-size:16; -fx-font-weight:bold; -fx-text-fill:#2c3e50;"/>
+
+    <Separator/>
+
+    <Label text="Nombre"/>
+    <TextField fx:id="txtNombre" maxWidth="Infinity"/>
+
+    <Label text="Tipo"/>
+    <ComboBox fx:id="cmbTipo" editable="true" maxWidth="Infinity"/>
+
+    <Separator/>
+
+    <Button text="Guardar cambios"
+            onAction="#guardar"
+            maxWidth="Infinity"
+            style="-fx-background-color:#2c3e50; -fx-text-fill:white; -fx-font-weight:bold;"/>
+
+    <Button text="Dar de baja esta tarjeta"
+            onAction="#darDeBaja"
+            maxWidth="Infinity"
+            style="-fx-background-color:#c0392b; -fx-text-fill:white; -fx-font-weight:bold;"/>
+
+</VBox>

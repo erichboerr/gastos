@@ -10,10 +10,11 @@
     <center>
         <TableView fx:id="tablaMovimientos">
             <columns>
-                <TableColumn fx:id="colFecha" text="Fecha" prefWidth="120"/>
-                <TableColumn fx:id="colDescripcion" text="Descripción" prefWidth="250"/>
-                <TableColumn fx:id="colMonto" text="Monto" prefWidth="120"/>
-                <TableColumn fx:id="colCuota" text="Cuota" prefWidth="100"/>
+                <TableColumn fx:id="colFecha"       text="Fecha"       prefWidth="110"/>
+                <TableColumn fx:id="colDescripcion" text="Descripción" prefWidth="220"/>
+                <TableColumn fx:id="colMonto"       text="Monto"       prefWidth="110"/>
+                <TableColumn fx:id="colCuota"       text="Cuota"       prefWidth="90"/>
+                <TableColumn fx:id="colAcciones"    text="Acciones"    prefWidth="150"/>
             </columns>
         </TableView>
     </center>

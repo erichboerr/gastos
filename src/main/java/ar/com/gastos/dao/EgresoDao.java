@@ -40,43 +40,9 @@ public class EgresoDao {
       if (rs.next()) {
         int movimientoId = rs.getInt("id");
         if (m.getCuotas() > 1) {
-          generarCuotas(c, movimientoId, m);
+          new MovimientoDao().generarCuotasPublic(c, movimientoId, m);
         }
       }
-    }
-  }
-
-  // Genera las cuotas del movimiento con BigDecimal y manejo de residuo de centavos
-  private void generarCuotas(Connection c, int movimientoId, Movimiento m) throws SQLException {
-    String sqlCuota = "INSERT INTO cuota(movimiento_id, nro_cuota, fecha_vencimiento, monto, estado) " +
-          "VALUES (?,?,?,?,?)";
-
-    try (PreparedStatement ps = c.prepareStatement(sqlCuota)) {
-      int cantidadCuotas = m.getCuotas();
-
-      BigDecimal montoPorCuota = m.getMonto()
-            .divide(BigDecimal.valueOf(cantidadCuotas), 2, RoundingMode.HALF_UP);
-
-      // Residuo: diferencia entre el total y la suma de todas las cuotas.
-      // Se suma a la última cuota para que el total sea exacto.
-      BigDecimal residuo = m.getMonto()
-            .subtract(montoPorCuota.multiply(BigDecimal.valueOf(cantidadCuotas)));
-
-      LocalDate fechaBase = m.getFecha();
-
-      for (int i = 1; i <= cantidadCuotas; i++) {
-        BigDecimal montoEstaCuota = (i == cantidadCuotas)
-              ? montoPorCuota.add(residuo)
-              : montoPorCuota;
-
-        ps.setInt(1, movimientoId);
-        ps.setInt(2, i);
-        ps.setDate(3, java.sql.Date.valueOf(fechaBase.plusMonths(i - 1)));
-        ps.setBigDecimal(4, montoEstaCuota);
-        ps.setString(5, "pendiente");
-        ps.addBatch();
-      }
-      ps.executeBatch();
     }
   }
 

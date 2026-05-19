@@ -95,7 +95,7 @@ public class ResumenAnualController {
                   : cierreMes.getMes();
             LocalDate hasta = cierreMes.getFechaCierre();
 
-            List<Movimiento> movs = movimientoDao.findByTarjetaEnRango(t.getId(), desde, hasta);
+            List<Movimiento> movs = movimientoDao.findByTarjetaEnRangoPeriodo(t.getId(), desde, hasta);
             for (Movimiento m : movs) {
               if ("EGRESO".equals(m.getCategoria())) {
                 egrMes += m.getMonto().doubleValue();

@@ -6,9 +6,7 @@ import ar.com.gastos.util.MovimientoEventBus;
 import ar.com.gastos.util.Toast;
 
 import javafx.fxml.FXML;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.*;
 import javafx.stage.Stage;
 
 import org.slf4j.Logger;
@@ -39,7 +37,6 @@ public class NuevaTarjetaController {
       List<String> tipos = dao.findTiposDistintos();
       cmbTipo.getItems().clear();
       cmbTipo.getItems().addAll(tipos);
-      // Editable: el usuario puede escribir un tipo que no esté en la lista
       cmbTipo.setEditable(true);
     } catch (SQLException e) {
       logger.error("Error al cargar tipos de tarjeta", e);
@@ -71,49 +68,84 @@ public class NuevaTarjetaController {
   private void guardarTarjeta() {
     String nombre = txtNombre.getText();
     if (nombre == null || nombre.isBlank()) {
-      Toast.show((Stage) txtNombre.getScene().getWindow(), "Ingresá el nombre de la tarjeta");
+      Toast.show(getStage(), "Ingresá el nombre de la tarjeta");
       return;
     }
 
     String tipo = cmbTipo.getValue();
     if (tipo == null || tipo.isBlank()) {
-      Toast.show((Stage) txtNombre.getScene().getWindow(), "Seleccioná o ingresá el tipo de tarjeta");
+      Toast.show(getStage(), "Seleccioná o ingresá el tipo de tarjeta");
       return;
     }
 
     try {
       TarjetaDao dao = new TarjetaDao();
+      String nombreNormalizado = nombre.toUpperCase().trim();
 
-      // Verificamos que no exista ya una tarjeta con ese nombre
-      // para evitar duplicados silenciosos.
-      Tarjeta existente = dao.findByNombre(nombre.toUpperCase().trim());
+      // Buscamos si ya existe una tarjeta con ese nombre, activa o no
+      Tarjeta existente = dao.findByNombreIgnorandoBaja(nombreNormalizado);
+
       if (existente != null) {
-        Toast.show((Stage) txtNombre.getScene().getWindow(),
-            "Ya existe una tarjeta con ese nombre");
-        return;
+        // Armamos el mensaje según si está activa o dada de baja
+        String estado = existente.getHabilitado() ? "activa" : "dada de baja";
+        String mensaje = "Ya existe una tarjeta con el nombre '" + existente.getNombre() + "' (" + estado + ").\n"
+            + "¿Querés crear una nueva de todas formas o activar la existente?";
+
+        // Botones personalizados
+        ButtonType btnCrear   = new ButtonType("Crear nueva");
+        ButtonType btnActivar = new ButtonType("Activar existente");
+        ButtonType btnCancelar = new ButtonType("Cancelar", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Tarjeta duplicada");
+        alert.setHeaderText("Tarjeta existente encontrada");
+        alert.setContentText(mensaje);
+        alert.getButtonTypes().setAll(btnCrear, btnActivar, btnCancelar);
+
+        Optional<ButtonType> respuesta = alert.showAndWait();
+
+        if (respuesta.isEmpty() || respuesta.get() == btnCancelar) {
+          // No hace nada — el usuario canceló
+          return;
+        }
+
+        if (respuesta.get() == btnActivar) {
+          // Reactivamos la tarjeta existente
+          dao.reactivar(existente.getId());
+          logger.info("Tarjeta reactivada: {} - id {}", existente.getNombre(), existente.getId());
+          MovimientoEventBus.publish("tarjeta-reactivada");
+          Toast.show(getStage(), "Tarjeta '" + existente.getNombre() + "' reactivada");
+          limpiarFormulario();
+          return;
+        }
+
+        // Si llegamos acá el usuario eligió "Crear nueva" — continuamos el flujo normal
       }
 
-      // habilitado = true por defecto al crear
-      Tarjeta nueva = new Tarjeta(0, nombre, tipo, true);
+      // --- Alta de tarjeta nueva ---
+      Tarjeta nueva = new Tarjeta(0, nombreNormalizado, tipo, true);
       dao.save(nueva);
 
-      // Notificamos al EventBus para que el dashboard se recargue
-      // y muestre la nueva tarjeta inmediatamente.
-      MovimientoEventBus.publish(nombre);
+      logger.info("Nueva tarjeta creada: {} ({})", nombreNormalizado, tipo.toUpperCase().trim());
+      MovimientoEventBus.publish("tarjeta-nueva");
+      Toast.show(getStage(), "Tarjeta guardada correctamente");
 
-      Toast.show((Stage) txtNombre.getScene().getWindow(),
-          "Tarjeta guardada correctamente");
-
-      logger.info("Nueva tarjeta creada: {} ({})", nombre.toUpperCase().trim(), tipo.toUpperCase().trim());
-
-      // Limpiamos el formulario para permitir cargar otra tarjeta
-      txtNombre.clear();
-      cmbTipo.setValue(null);
-      cargarTipos();
+      limpiarFormulario();
 
     } catch (SQLException e) {
-      Toast.show((Stage) txtNombre.getScene().getWindow(), "Error al guardar la tarjeta");
+      Toast.show(getStage(), "Error al guardar la tarjeta");
       logger.error("Error al guardar tarjeta", e);
     }
+  }
+
+  // Limpia el formulario para permitir cargar otra tarjeta sin cerrar la ventana
+  private void limpiarFormulario() {
+    txtNombre.clear();
+    cmbTipo.setValue(null);
+    cargarTipos();
+  }
+
+  private Stage getStage() {
+    return (Stage) txtNombre.getScene().getWindow();
   }
 }
