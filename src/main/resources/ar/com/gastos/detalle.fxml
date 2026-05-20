@@ -10,6 +10,7 @@
             <Label fx:id="lblTitulo" text="Detalle de movimientos"
                    style="-fx-font-size:16; -fx-font-weight:bold; -fx-padding:10;"/>
             <!-- Navegación por mes -->
+            <!-- Navegación por mes + resumen -->
             <HBox spacing="10" alignment="CENTER" style="-fx-padding:4 10 8 10; -fx-background-color:#f0f0f0;">
                 <Button text="◀" onAction="#meAnterior"
                         style="-fx-background-color:transparent; -fx-font-size:14; -fx-cursor:hand;"/>
@@ -17,7 +18,10 @@
                        style="-fx-font-size:14; -fx-font-weight:bold;" minWidth="140" alignment="CENTER"/>
                 <Button text="▶" onAction="#meSiguiente"
                         style="-fx-background-color:transparent; -fx-font-size:14; -fx-cursor:hand;"/>
-                <Label fx:id="lblTotalMes" style="-fx-font-size:13; -fx-text-fill:#c0392b;"/>
+                <Separator orientation="VERTICAL"/>
+                <Label fx:id="lblConsumos" style="-fx-font-size:12; -fx-text-fill:#2c3e50;"/>
+                <Label fx:id="lblPagos"    style="-fx-font-size:12; -fx-text-fill:#27ae60;"/>
+                <Label fx:id="lblSaldo"    style="-fx-font-size:12; -fx-font-weight:bold;"/>
             </HBox>
         </VBox>
     </top>

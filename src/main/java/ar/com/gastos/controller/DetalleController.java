@@ -38,12 +38,16 @@ public class DetalleController {
   @FXML private Label lblTitulo;
   @FXML private Label lblMes;
   @FXML private Label lblTotalMes;
+  @FXML private Label lblConsumos;
+  @FXML private Label lblPagos;
+  @FXML private Label lblSaldo;
   @FXML private TableView<Movimiento> tablaMovimientos;
   @FXML private TableColumn<Movimiento, LocalDate>  colFecha;
   @FXML private TableColumn<Movimiento, String>     colDescripcion;
   @FXML private TableColumn<Movimiento, BigDecimal> colMonto;
   @FXML private TableColumn<Movimiento, String>     colCuota;
   @FXML private TableColumn<Movimiento, Void>       colAcciones;
+
 
   private Tarjeta tarjetaActual;
 
@@ -180,11 +184,15 @@ public class DetalleController {
       // Calculamos el total del mes y armamos el texto de cuota por fila
       BigDecimal totalMes = BigDecimal.ZERO;
 
+      // Calculamos consumos y pagos del período por separado
+      BigDecimal totalConsumos = BigDecimal.ZERO;
+      BigDecimal totalPagos    = BigDecimal.ZERO;
+
       for (Movimiento m : movimientos) {
         if ("EGRESO".equals(m.getCategoria())) {
           if (m.getCuotas() == 1) {
             m.setCuotaTexto("Pago único");
-            totalMes = totalMes.add(m.getMonto());
+            totalConsumos = totalConsumos.add(m.getMonto());
           } else {
             // Mostramos la cuota que vence en el período
             List<Cuota> cuotas = cuotaDao.findByMovimiento(m.getId());
@@ -193,15 +201,32 @@ public class DetalleController {
                   !c.getFechaVencimiento().isAfter(hasta)) {
                 m.setMonto(c.getMonto());
                 m.setCuotaTexto(c.getNroCuota() + " de " + m.getCuotas());
-                totalMes = totalMes.add(c.getMonto());
+                totalConsumos = totalConsumos.add(c.getMonto());
                 break;
               }
             }
           }
+        } else if ("PAGO".equals(m.getCategoria())) {
+          totalPagos = totalPagos.add(m.getMonto());
+          m.setCuotaTexto("-");
         } else {
           m.setCuotaTexto("-");
         }
       }
+
+      BigDecimal saldo = totalConsumos.subtract(totalPagos);
+
+      lblConsumos.setText("Consumos: " + CURRENCY.format(totalConsumos));
+      lblPagos.setText("Pagos: "    + CURRENCY.format(totalPagos));
+      lblSaldo.setText("Saldo: "    + CURRENCY.format(saldo));
+
+// Color del saldo: rojo si positivo (debe), verde si cero o negativo (a favor)
+      lblSaldo.setStyle(saldo.compareTo(BigDecimal.ZERO) > 0
+          ? "-fx-font-size:12; -fx-font-weight:bold; -fx-text-fill:#c0392b;"
+          : "-fx-font-size:12; -fx-font-weight:bold; -fx-text-fill:#27ae60;");
+
+// Ya no usamos lblTotalMes — podés eliminarlo del FXML y del controller
+      tablaMovimientos.setItems(FXCollections.observableArrayList(movimientos));
 
       lblTotalMes.setText("Total del mes: " + CURRENCY.format(totalMes));
       tablaMovimientos.setItems(FXCollections.observableArrayList(movimientos));
