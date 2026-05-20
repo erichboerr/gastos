@@ -1,7 +1,9 @@
 package ar.com.gastos.controller;
 
+import ar.com.gastos.dao.CierreTarjetaDao;
 import ar.com.gastos.dao.CuotaDao;
 import ar.com.gastos.dao.MovimientoDao;
+import ar.com.gastos.model.CierreTarjeta;
 import ar.com.gastos.model.Cuota;
 import ar.com.gastos.model.Movimiento;
 import ar.com.gastos.model.Tarjeta;
@@ -23,7 +25,9 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
 import java.util.List;
 import java.util.Locale;
 
@@ -32,19 +36,29 @@ public class DetalleController {
   private static final Logger logger = LoggerFactory.getLogger(DetalleController.class);
 
   @FXML private Label lblTitulo;
+  @FXML private Label lblMes;
+  @FXML private Label lblTotalMes;
   @FXML private TableView<Movimiento> tablaMovimientos;
-  @FXML private TableColumn<Movimiento, LocalDate>     colFecha;
-  @FXML private TableColumn<Movimiento, String>        colDescripcion;
-  @FXML private TableColumn<Movimiento, BigDecimal>    colMonto;
-  @FXML private TableColumn<Movimiento, String>        colCuota;
-  @FXML private TableColumn<Movimiento, Void>          colAcciones;
+  @FXML private TableColumn<Movimiento, LocalDate>  colFecha;
+  @FXML private TableColumn<Movimiento, String>     colDescripcion;
+  @FXML private TableColumn<Movimiento, BigDecimal> colMonto;
+  @FXML private TableColumn<Movimiento, String>     colCuota;
+  @FXML private TableColumn<Movimiento, Void>       colAcciones;
 
   private Tarjeta tarjetaActual;
 
-  // --- Setea la tarjeta y carga los movimientos ---
+  // Mes navegable — se inicializa con el mes que pasa el DashboardController
+  private YearMonth mesVisible = YearMonth.now();
 
-  public void setTarjeta(Tarjeta tarjeta) {
+  private static final NumberFormat CURRENCY =
+      NumberFormat.getCurrencyInstance(new Locale("es", "AR"));
+  static { CURRENCY.setMaximumFractionDigits(2); }
+
+  // --- Recibe la tarjeta y el mes visible desde DashboardController ---
+
+  public void setTarjeta(Tarjeta tarjeta, YearMonth mes) {
     this.tarjetaActual = tarjeta;
+    this.mesVisible = mes;
     lblTitulo.setText("Detalle de " + tarjeta.getNombre());
     recargarMovimientos();
   }
@@ -53,8 +67,6 @@ public class DetalleController {
 
   @FXML
   public void initialize() {
-
-    // Columnas simples
     colFecha.setCellValueFactory(new PropertyValueFactory<>("fecha"));
     colDescripcion.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
     colMonto.setCellValueFactory(new PropertyValueFactory<>("monto"));
@@ -71,27 +83,22 @@ public class DetalleController {
     });
 
     // Formato de monto en pesos
-    NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("es", "AR"));
-    currencyFormat.setMaximumFractionDigits(2);
     colMonto.setCellFactory(col -> new TableCell<>() {
       @Override
       protected void updateItem(BigDecimal monto, boolean empty) {
         super.updateItem(monto, empty);
-        setText(empty || monto == null ? null : currencyFormat.format(monto));
+        setText(empty || monto == null ? null : CURRENCY.format(monto));
       }
     });
 
-    // Columna de acciones: botón Editar + botón Eliminar por fila
+    // Columna de acciones: Editar + Eliminar por fila
     colAcciones.setCellFactory(col -> new TableCell<>() {
       private final Button btnEditar   = new Button("Editar");
       private final Button btnEliminar = new Button("Eliminar");
       private final HBox   hbox        = new HBox(6, btnEditar, btnEliminar);
 
       {
-        // Estilo botón editar
         btnEditar.setStyle("-fx-background-color:#2c3e50; -fx-text-fill:white; -fx-font-size:11;");
-
-        // Estilo botón eliminar
         btnEliminar.setStyle("-fx-background-color:#c0392b; -fx-text-fill:white; -fx-font-size:11;");
 
         btnEditar.setOnAction(e -> {
@@ -112,7 +119,7 @@ public class DetalleController {
       }
     });
 
-    // Recarga el detalle cuando el EventBus notifica cambios
+    // Recarga cuando el EventBus notifica cambios
     MovimientoEventBus.subscribe(evento -> {
       if (tarjetaActual != null) {
         Platform.runLater(this::recargarMovimientos);
@@ -120,61 +127,110 @@ public class DetalleController {
     });
   }
 
-  // --- Carga los movimientos de la tarjeta actual ---
+  // --- Navegación por mes ---
+
+  @FXML
+  private void meAnterior() {
+    mesVisible = mesVisible.minusMonths(1);
+    recargarMovimientos();
+  }
+
+  @FXML
+  private void meSiguiente() {
+    mesVisible = mesVisible.plusMonths(1);
+    recargarMovimientos();
+  }
+
+  // --- Carga los movimientos filtrados por período de cierre del mes visible ---
 
   private void recargarMovimientos() {
     if (tarjetaActual == null) return;
-    try {
-      MovimientoDao movimientoDao = new MovimientoDao();
-      CuotaDao cuotaDao = new CuotaDao();
 
-      List<Movimiento> movimientos = movimientoDao.findByTarjeta(tarjetaActual.getId());
+    // Actualizamos el label del mes — ej: "Mayo 2026"
+    String nombreMes = mesVisible.getMonth()
+        .getDisplayName(TextStyle.FULL, new Locale("es"));
+    nombreMes = nombreMes.substring(0, 1).toUpperCase() + nombreMes.substring(1);
+    lblMes.setText(nombreMes + " " + mesVisible.getYear());
+
+    try {
+      MovimientoDao movimientoDao   = new MovimientoDao();
+      CuotaDao cuotaDao             = new CuotaDao();
+      CierreTarjetaDao cierreDao    = new CierreTarjetaDao();
+
+      // Buscamos el cierre del mes visible para esta tarjeta
+      CierreTarjeta cierreMes = cierreDao.findCierrePorMes(tarjetaActual.getId(), mesVisible);
+
+      List<Movimiento> movimientos;
+      LocalDate desde = mesVisible.atDay(1);
+      LocalDate hasta = mesVisible.atEndOfMonth();
+
+      if (cierreMes != null) {
+        // Si hay cierre definido usamos el período real
+        CierreTarjeta cierreAnterior = cierreDao.findAnteriorPorTarjeta(
+            tarjetaActual.getId(), cierreMes.getFechaCierre());
+        desde = (cierreAnterior != null)
+            ? cierreAnterior.getFechaCierre().plusDays(1)
+            : cierreMes.getMes();
+        hasta = cierreMes.getFechaCierre();
+      }
+
+      movimientos = movimientoDao.findByTarjetaEnRangoPeriodo(
+          tarjetaActual.getId(), desde, hasta);
+
+      // Calculamos el total del mes y armamos el texto de cuota por fila
+      BigDecimal totalMes = BigDecimal.ZERO;
 
       for (Movimiento m : movimientos) {
-        if (m.getCuotas() == 1) {
-          m.setCuotaTexto("Pago único");
-        } else {
-          // Mostramos la primera cuota pendiente
-          List<Cuota> cuotas = cuotaDao.findByMovimiento(m.getId());
-          cuotas.stream()
-              .filter(c -> "pendiente".equals(c.getEstado()))
-              .findFirst()
-              .ifPresent(c -> {
+        if ("EGRESO".equals(m.getCategoria())) {
+          if (m.getCuotas() == 1) {
+            m.setCuotaTexto("Pago único");
+            totalMes = totalMes.add(m.getMonto());
+          } else {
+            // Mostramos la cuota que vence en el período
+            List<Cuota> cuotas = cuotaDao.findByMovimiento(m.getId());
+            for (Cuota c : cuotas) {
+              if (!c.getFechaVencimiento().isBefore(desde) &&
+                  !c.getFechaVencimiento().isAfter(hasta)) {
                 m.setMonto(c.getMonto());
                 m.setCuotaTexto(c.getNroCuota() + " de " + m.getCuotas());
-              });
+                totalMes = totalMes.add(c.getMonto());
+                break;
+              }
+            }
+          }
+        } else {
+          m.setCuotaTexto("-");
         }
       }
 
+      lblTotalMes.setText("Total del mes: " + CURRENCY.format(totalMes));
       tablaMovimientos.setItems(FXCollections.observableArrayList(movimientos));
 
     } catch (Exception ex) {
-      logger.error("Error al recargar movimientos de tarjeta {}", tarjetaActual.getNombre(), ex);
+      logger.error("Error al recargar movimientos de tarjeta {}",
+          tarjetaActual.getNombre(), ex);
     }
   }
 
-  // --- Abre el formulario de edición con el movimiento precargado ---
+  // --- Abre el formulario de edición ---
 
   private void abrirEditar(Movimiento m) {
     try {
       FXMLLoader loader = new FXMLLoader(
           getClass().getResource("/ar/com/gastos/editar-movimiento.fxml"));
       Scene scene = new Scene(loader.load(), 400, 380);
-
       EditarMovimientoController ctrl = loader.getController();
       ctrl.setMovimiento(m);
-
       Stage stage = new Stage();
       stage.setTitle("Editar Movimiento");
       stage.setScene(scene);
       stage.show();
-
     } catch (IOException ex) {
       logger.error("Error al abrir formulario de edición", ex);
     }
   }
 
-  // --- Pide confirmación antes de eliminar ---
+  // --- Confirmar y eliminar movimiento ---
 
   private void confirmarEliminar(Movimiento m) {
     Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
@@ -184,26 +240,16 @@ public class DetalleController {
         + (m.getCuotas() > 1 ? "Se eliminarán también todas sus cuotas." : ""));
 
     alert.showAndWait().ifPresent(respuesta -> {
-      if (respuesta == ButtonType.OK) {
-        eliminar(m);
-      }
+      if (respuesta == ButtonType.OK) eliminar(m);
     });
   }
 
-  // --- Elimina el movimiento y sus cuotas ---
-
   private void eliminar(Movimiento m) {
     try {
-      MovimientoDao dao = new MovimientoDao();
-      dao.delete(m.getId());
-
+      new MovimientoDao().delete(m.getId());
       logger.info("Movimiento eliminado: {} - id {}", m.getDescripcion(), m.getId());
-
-      // Notificamos al dashboard y al detalle
       MovimientoEventBus.publish("eliminacion");
-
       Toast.show((Stage) tablaMovimientos.getScene().getWindow(), "Movimiento eliminado");
-
     } catch (Exception ex) {
       Toast.show((Stage) tablaMovimientos.getScene().getWindow(), "Error al eliminar");
       logger.error("Error al eliminar movimiento id {}", m.getId(), ex);

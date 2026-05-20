@@ -346,10 +346,11 @@ public class DashboardController {
     Button btn = new Button("Ver detalle");
     btn.setOnAction(e -> {
       try {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/ar/com/gastos/detalle.fxml"));
-        Scene scene = new Scene(loader.load(), 650, 400);
+        FXMLLoader loader = new FXMLLoader(
+            getClass().getResource("/ar/com/gastos/detalle.fxml"));
+        Scene scene = new Scene(loader.load(), 720, 600);
         DetalleController ctrl = loader.getController();
-        ctrl.setTarjeta(t);
+        ctrl.setTarjeta(t, mesVisible); // ← pasamos el mes visible
         Stage stage = new Stage();
         stage.setTitle("Detalle de " + t.getNombre());
         stage.setScene(scene);

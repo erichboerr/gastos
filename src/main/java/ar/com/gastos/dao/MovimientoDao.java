@@ -85,13 +85,17 @@ public class MovimientoDao {
 
         ps.setInt(1, movimientoId);
         ps.setInt(2, i);
-        // Cada cuota vence un mes después de la anterior
-        ps.setDate(3, Date.valueOf(fechaBase.plusMonths(i - 1)));
+
+        // Cuota 1: fecha de compra. Cuotas siguientes: día 1 del mes correspondiente.
+        // Así se garantiza que ninguna cuota se salte un período por caer después del cierre.
+        LocalDate fechaCuota = (i == 1)
+            ? fechaBase
+            : fechaBase.plusMonths(i - 1).withDayOfMonth(1);
+        ps.setDate(3, Date.valueOf(fechaCuota));
         ps.setBigDecimal(4, montoEstaCuota);
         ps.setString(5, "pendiente");
         ps.addBatch();
       }
-
       ps.executeBatch();
     }
   }
@@ -124,7 +128,7 @@ public class MovimientoDao {
    * Para el período dado retorna:
    * - Movimientos de cuota única cuya fecha cae en el período
    * - Movimientos en cuotas que tienen al menos una cuota con
-   *   fecha_vencimiento dentro del período
+   * fecha_vencimiento dentro del período
    */
   public List<Movimiento> findByTarjetaEnRangoPeriodo(int tarjetaId, LocalDate desde, LocalDate hasta)
       throws SQLException {
@@ -138,7 +142,7 @@ public class MovimientoDao {
             "    WHERE c.movimiento_id = m.id " +
             "    AND c.fecha_vencimiento BETWEEN ? AND ?" +
             "  ))" +
-            ")";
+            ")ORDER BY m.fecha ASC";
 
     List<Movimiento> lista = new ArrayList<>();
     try (Connection conn = Db.getDataSource().getConnection();
