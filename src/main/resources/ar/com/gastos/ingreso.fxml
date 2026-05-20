@@ -4,10 +4,41 @@
 <?import javafx.scene.control.*?>
 
 <VBox xmlns:fx="http://javafx.com/fxml" fx:controller="ar.com.gastos.controller.IngresoController"
-      spacing="10" alignment="CENTER" style="-fx-padding:20;">
-    <Label text="Registrar Ingreso" style="-fx-font-size:18; -fx-font-weight:bold;"/>
+      spacing="10" alignment="TOP_CENTER" style="-fx-padding:20;" prefWidth="600">
+
+    <Label text="Ingresos" style="-fx-font-size:18; -fx-font-weight:bold;"/>
+
+    <Separator/>
+
+    <!-- Formulario de alta / edición -->
+    <Label text="Tipo de ingreso"/>
     <ComboBox fx:id="cmbTipoIngreso" promptText="Tipo de ingreso" editable="true" maxWidth="Infinity"/>
+
+    <Label text="Fecha"/>
     <DatePicker fx:id="dpFecha" promptText="Fecha" maxWidth="Infinity"/>
-    <TextField fx:id="txtMonto" promptText="Monto"/>
-    <Button text="Guardar" onAction="#guardarIngreso"/>
+
+    <Label text="Monto"/>
+    <TextField fx:id="txtMonto" promptText="Monto" maxWidth="Infinity"/>
+
+    <HBox spacing="8">
+        <Button text="Guardar" onAction="#guardarIngreso"
+                style="-fx-background-color:#2c3e50; -fx-text-fill:white; -fx-font-weight:bold;"
+                HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+        <Button text="Limpiar" onAction="#limpiar"
+                HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+    </HBox>
+
+    <Separator/>
+
+    <!-- Lista de ingresos -->
+    <Label text="Ingresos cargados"/>
+    <TableView fx:id="tablaIngresos" prefHeight="250" maxWidth="Infinity">
+        <columns>
+            <TableColumn fx:id="colFecha"   text="Fecha"  prefWidth="110"/>
+            <TableColumn fx:id="colTipo"    text="Tipo"   prefWidth="160"/>
+            <TableColumn fx:id="colMonto"   text="Monto"  prefWidth="120"/>
+            <TableColumn fx:id="colAcciones" text="Acciones" prefWidth="150"/>
+        </columns>
+    </TableView>
+
 </VBox>

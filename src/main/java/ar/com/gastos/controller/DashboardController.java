@@ -92,15 +92,20 @@ public class DashboardController {
   // --- Apertura de formularios ---
 
   @FXML
-  private void abrirNuevaTarjeta() {
-    abrirFormulario("/ar/com/gastos/nueva-tarjeta.fxml", "Nueva Tarjeta");
-  }
-
-  @FXML
   private void abrirIngreso() {
-    abrirFormulario("/ar/com/gastos/ingreso.fxml", "Nuevo Ingreso");
+    try {
+      FXMLLoader loader = new FXMLLoader(getClass().getResource("/ar/com/gastos/ingreso.fxml"));
+      Scene scene = new Scene(loader.load(), 600, 600);
+      Stage stage = new Stage();
+      stage.setTitle("Ingresos");
+      stage.setScene(scene);
+      stage.show();
+    } catch (IOException ex) {
+      logger.error("Error al abrir ingresos", ex);
+    }
   }
 
+  @FXML private void abrirNuevaTarjeta() { abrirFormulario("/ar/com/gastos/nueva-tarjeta.fxml", "Nueva Tarjeta"); }
   @FXML
   private void abrirEgreso() {
     abrirFormulario("/ar/com/gastos/egreso.fxml", "Nuevo Egreso");
@@ -143,7 +148,9 @@ public class DashboardController {
     }
   }
 
-  // Método genérico para abrir cualquier formulario en una nueva ventana modal
+
+
+  // Metodo genérico para abrir cualquier formulario en una nueva ventana modal
   private void abrirFormulario(String fxmlPath, String titulo) {
     try {
       FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
@@ -373,4 +380,6 @@ public class DashboardController {
     });
     return btn;
   }
+
+
 }
