@@ -1,24 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
 
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="ar.com.gastos.controller.CierreTarjetaController"
-      spacing="10" alignment="CENTER" style="-fx-padding:20;"
-      prefWidth="400" prefHeight="300">
+      spacing="10" alignment="TOP_CENTER" style="-fx-padding:20;"
+      prefWidth="650">
 
+    <Label text="Cierres de Tarjeta"
+           style="-fx-font-size:16; -fx-font-weight:bold; -fx-text-fill:#2c3e50;"/>
+
+    <Separator/>
+
+    <!-- Formulario de alta / edición -->
     <Label text="Tarjeta"/>
-    <ComboBox fx:id="cmbTarjeta" promptText="Seleccione tarjeta"/>
+    <ComboBox fx:id="cmbTarjeta" promptText="Seleccione tarjeta" maxWidth="Infinity"
+              onAction="#onTarjetaSeleccionada"/>
 
     <Label text="Mes"/>
-    <DatePicker fx:id="dpMes"/>
+    <DatePicker fx:id="dpMes" maxWidth="Infinity"/>
 
     <Label text="Fecha de cierre"/>
-    <DatePicker fx:id="dpCierre"/>
+    <DatePicker fx:id="dpCierre" maxWidth="Infinity"/>
 
     <Label text="Fecha de vencimiento"/>
-    <DatePicker fx:id="dpVencimiento"/>
+    <DatePicker fx:id="dpVencimiento" maxWidth="Infinity"/>
 
-    <Button text="Guardar" onAction="#guardarCierre"/>
+    <HBox spacing="8">
+        <Button text="Guardar" onAction="#guardarCierre"
+                style="-fx-background-color:#2c3e50; -fx-text-fill:white; -fx-font-weight:bold;"
+                HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+        <Button text="Limpiar" onAction="#limpiar"
+                HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+    </HBox>
+
+    <Separator/>
+
+    <!-- Lista de cierres de la tarjeta seleccionada -->
+    <Label text="Cierres registrados"/>
+    <TableView fx:id="tablaCierres" prefHeight="220" maxWidth="Infinity">
+        <columns>
+            <TableColumn fx:id="colMes"         text="Mes"         prefWidth="120"/>
+            <TableColumn fx:id="colFechaCierre"  text="Cierre"      prefWidth="120"/>
+            <TableColumn fx:id="colFechaVenc"    text="Vencimiento" prefWidth="120"/>
+            <TableColumn fx:id="colAcciones"     text="Acciones"    prefWidth="170"/>
+        </columns>
+    </TableView>
+
 </VBox>

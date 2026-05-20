@@ -105,6 +105,19 @@ public class DashboardController {
     }
   }
 
+  @FXML private void abrirCierreTarjeta() {
+    try {
+      FXMLLoader loader = new FXMLLoader(getClass().getResource("/ar/com/gastos/CierreTarjeta.fxml"));
+      Scene scene = new Scene(loader.load(), 670, 620);
+      Stage stage = new Stage();
+      stage.setTitle("Cierre de Tarjeta");
+      stage.setScene(scene);
+      stage.show();
+    } catch (IOException ex) {
+      logger.error("Error al abrir cierres", ex);
+    }
+  }
+
   @FXML private void abrirNuevaTarjeta() { abrirFormulario("/ar/com/gastos/nueva-tarjeta.fxml", "Nueva Tarjeta"); }
   @FXML
   private void abrirEgreso() {
@@ -114,11 +127,6 @@ public class DashboardController {
   @FXML
   private void abrirPago() {
     abrirFormulario("/ar/com/gastos/pago.fxml", "Registrar Pago");
-  }
-
-  @FXML
-  private void abrirCierreTarjeta() {
-    abrirFormulario("/ar/com/gastos/CierreTarjeta.fxml", "Cierre de Tarjeta");
   }
 
   @FXML

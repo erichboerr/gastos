@@ -6,6 +6,8 @@ import ar.com.gastos.util.Db;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CierreTarjetaDao {
 
@@ -89,5 +91,41 @@ public class CierreTarjetaDao {
           rs.getDate("fecha_cierre").toLocalDate(),
           rs.getDate("fecha_vencimiento").toLocalDate()
     );
+  }
+
+  /** Retorna todos los cierres de una tarjeta ordenados por mes DESC */
+  public List<CierreTarjeta> findByTarjeta(int tarjetaId) throws SQLException {
+    List<CierreTarjeta> lista = new ArrayList<>();
+    String sql = "SELECT * FROM cierres_tarjeta WHERE id = ? ORDER BY mes DESC";
+    try (Connection conn = Db.getDataSource().getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, tarjetaId);
+      ResultSet rs = ps.executeQuery();
+      while (rs.next()) lista.add(mapRow(rs));
+    }
+    return lista;
+  }
+
+  /** Actualiza fecha de cierre y vencimiento de un cierre existente */
+  public void update(CierreTarjeta c) throws SQLException {
+    String sql = "UPDATE cierres_tarjeta SET mes=?, fecha_cierre=?, fecha_vencimiento=? WHERE id_cierre=?";
+    try (Connection conn = Db.getDataSource().getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setDate(1, Date.valueOf(c.getMes()));
+      ps.setDate(2, Date.valueOf(c.getFechaCierre()));
+      ps.setDate(3, Date.valueOf(c.getFechaVencimiento()));
+      ps.setInt(4, c.getIdCierre());
+      ps.executeUpdate();
+    }
+  }
+
+  /** Elimina un cierre por su id_cierre */
+  public void delete(int idCierre) throws SQLException {
+    String sql = "DELETE FROM cierres_tarjeta WHERE id_cierre=?";
+    try (Connection conn = Db.getDataSource().getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, idCierre);
+      ps.executeUpdate();
+    }
   }
 }
