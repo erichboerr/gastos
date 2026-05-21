@@ -15,13 +15,18 @@
     <Label text="Fecha"/>
     <DatePicker fx:id="dpFecha" maxWidth="Infinity"/>
 
-    <Label text="Descripción"/>
+    <!-- Para EGRESO: ComboBox de comercios -->
+    <Label fx:id="lblComercio" text="Comercio"/>
+    <ComboBox fx:id="cmbComercio" maxWidth="Infinity"/>
+
+    <!-- Para PAGO: TextField libre -->
+    <Label fx:id="lblDescripcion" text="Descripción"/>
     <TextField fx:id="txtDescripcion" maxWidth="Infinity"/>
 
     <Label text="Monto"/>
     <TextField fx:id="txtMonto" maxWidth="Infinity"/>
 
-    <Label text="Cuotas"/>
+    <Label fx:id="lblCuotas" text="Cuotas"/>
     <TextField fx:id="txtCuotas" maxWidth="Infinity"/>
 
     <Separator/>

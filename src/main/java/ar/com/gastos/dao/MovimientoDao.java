@@ -1,7 +1,8 @@
 package ar.com.gastos.dao;
 
-import ar.com.gastos.model.Movimiento;
+import ar.com.gastos.model.Comercio;
 import ar.com.gastos.model.Cuota;
+import ar.com.gastos.model.Movimiento;
 import ar.com.gastos.util.Db;
 
 import java.math.BigDecimal;
@@ -13,26 +14,39 @@ import java.util.List;
 
 public class MovimientoDao {
 
+  // --- Alta ---
+
+  /**
+   * Inserta un movimiento en la DB.
+   * Si tiene cuotas > 1 genera las filas en la tabla cuota en la misma transacción.
+   */
   public void save(Movimiento m) throws SQLException {
-    String sql = "INSERT INTO movimiento(tarjeta_id, fecha, descripcion, monto, categoria, moneda, cuotas) " +
-        "VALUES (?,?,?,?,?,?,?) RETURNING id";
+    String sql = "INSERT INTO movimiento(tarjeta_id, comercio_id, fecha, descripcion, monto, categoria, moneda, cuotas) " +
+        "VALUES (?,?,?,?,?,?,?,?) RETURNING id";
 
     try (Connection c = Db.getDataSource().getConnection();
          PreparedStatement ps = c.prepareStatement(sql)) {
 
       ps.setInt(1, m.getTarjetaId());
-      ps.setDate(2, Date.valueOf(m.getFecha()));
-      ps.setString(3, m.getDescripcion());
-      ps.setBigDecimal(4, m.getMonto());
-      ps.setString(5, m.getCategoria());
-      ps.setString(6, m.getMoneda());
-      ps.setInt(7, m.getCuotas());
+
+      // comercio_id es NULL para pagos
+      if (m.getComercioId() > 0) {
+        ps.setInt(2, m.getComercioId());
+      } else {
+        ps.setNull(2, Types.INTEGER);
+      }
+
+      ps.setDate(3, Date.valueOf(m.getFecha()));
+      ps.setString(4, m.getDescripcion() != null
+          ? m.getDescripcion().toUpperCase().trim() : null);
+      ps.setBigDecimal(5, m.getMonto().setScale(2));
+      ps.setString(6, m.getCategoria());
+      ps.setString(7, m.getMoneda());
+      ps.setInt(8, m.getCuotas());
 
       ResultSet rs = ps.executeQuery();
       if (rs.next()) {
         int movimientoId = rs.getInt("id");
-
-        // Generar cuotas si el movimiento tiene más de una
         if (m.getCuotas() > 1) {
           generarCuotasPublic(c, movimientoId, m);
         }
@@ -40,57 +54,49 @@ public class MovimientoDao {
     }
   }
 
+  // --- Generación de cuotas ---
+
   /**
    * Genera las cuotas de un movimiento y las inserta en la tabla cuota.
-   * <p>
-   * BUG CORREGIDO: antes se usaba double para dividir el monto:
-   * double montoPorCuota = m.getMonto().doubleValue() / m.getCuotas();
-   * <p>
-   * El problema es que double es punto flotante binario y no puede representar
-   * exactamente todos los decimales. Por ejemplo:
-   * $100.00 / 3 con double  → 33.333333333333336  (residuo fantasma)
-   * $100.00 / 3 con BigDecimal → 33.33 + 33.33 + 33.34  (correcto)
-   * <p>
+   *
+   * BUG CORREGIDO: antes se usaba double para dividir el monto.
    * Para dinero SIEMPRE se usa BigDecimal con escala y RoundingMode explícitos.
-   * <p>
-   * MEJORA ADICIONAL: el residuo de centavos se suma a la última cuota,
-   * garantizando que cuota1 + cuota2 + ... + cuotaN == monto total exacto.
+   *
+   * MEJORA: el residuo de centavos se suma a la última cuota,
+   * garantizando que cuota1 + ... + cuotaN == monto total exacto.
    * Ejemplo: $100.00 / 3 → cuota1=33.33, cuota2=33.33, cuota3=33.34
    */
   public void generarCuotasPublic(Connection c, int movimientoId, Movimiento m) throws SQLException {
-    String sqlCuota = "INSERT INTO cuota(movimiento_id, nro_cuota, fecha_vencimiento, monto, estado) " +
+    String sql = "INSERT INTO cuota(movimiento_id, nro_cuota, fecha_vencimiento, monto, estado) " +
         "VALUES (?,?,?,?,?)";
 
-    try (PreparedStatement ps = c.prepareStatement(sqlCuota)) {
-
-      int cantidadCuotas = m.getCuotas();
+    try (PreparedStatement ps = c.prepareStatement(sql)) {
+      int cantidad = m.getCuotas();
 
       // Dividimos con HALF_UP (redondeo estándar bancario) y 2 decimales
       BigDecimal montoPorCuota = m.getMonto()
-          .divide(BigDecimal.valueOf(cantidadCuotas), 2, RoundingMode.HALF_UP);
+          .divide(BigDecimal.valueOf(cantidad), 2, RoundingMode.HALF_UP);
 
-      // Calculamos el residuo: diferencia entre el total original y la suma de todas las cuotas.
-      // Ejemplo: $100.00 / 3 = 33.33 * 3 = 99.99 → residuo = 0.01
-      BigDecimal sumaCalculada = montoPorCuota.multiply(BigDecimal.valueOf(cantidadCuotas));
-      BigDecimal residuo = m.getMonto().subtract(sumaCalculada);
+      // Residuo: diferencia entre el total original y la suma de cuotas redondeadas
+      BigDecimal residuo = m.getMonto()
+          .subtract(montoPorCuota.multiply(BigDecimal.valueOf(cantidad)));
 
       LocalDate fechaBase = m.getFecha();
 
-      for (int i = 1; i <= cantidadCuotas; i++) {
-        // El monto de la última cuota absorbe el residuo de centavos
-        // para que la suma exacta de todas las cuotas sea igual al monto original.
-        BigDecimal montoEstaCuota = (i == cantidadCuotas)
+      for (int i = 1; i <= cantidad; i++) {
+        // La última cuota absorbe el residuo de centavos
+        BigDecimal montoEstaCuota = (i == cantidad)
             ? montoPorCuota.add(residuo)
             : montoPorCuota;
 
-        ps.setInt(1, movimientoId);
-        ps.setInt(2, i);
-
-        // Cuota 1: fecha de compra. Cuotas siguientes: día 1 del mes correspondiente.
-        // Así se garantiza que ninguna cuota se salte un período por caer después del cierre.
+        // Cuota 1: fecha de compra. Siguientes: día 1 del mes correspondiente.
+        // Garantiza que ninguna cuota se salte un período por caer después del cierre.
         LocalDate fechaCuota = (i == 1)
             ? fechaBase
             : fechaBase.plusMonths(i - 1).withDayOfMonth(1);
+
+        ps.setInt(1, movimientoId);
+        ps.setInt(2, i);
         ps.setDate(3, Date.valueOf(fechaCuota));
         ps.setBigDecimal(4, montoEstaCuota);
         ps.setString(5, "pendiente");
@@ -100,53 +106,56 @@ public class MovimientoDao {
     }
   }
 
+  // --- Consultas ---
+
+  /** Retorna todos los movimientos de una tarjeta ordenados por fecha ASC */
   public List<Movimiento> findByTarjeta(int tarjetaId) throws SQLException {
-    List<Movimiento> list = new ArrayList<>();
-    String sql = "SELECT * FROM movimiento WHERE tarjeta_id = ? ORDER BY fecha ASC";
+    List<Movimiento> lista = new ArrayList<>();
+    String sql = "SELECT m.*, COALESCE(co.nombre, m.descripcion) AS label " +
+        "FROM movimiento m " +
+        "LEFT JOIN comercio co ON co.id = m.comercio_id " +
+        "WHERE m.tarjeta_id = ? ORDER BY m.fecha ASC";
 
     try (Connection c = Db.getDataSource().getConnection();
          PreparedStatement ps = c.prepareStatement(sql)) {
       ps.setInt(1, tarjetaId);
       ResultSet rs = ps.executeQuery();
       while (rs.next()) {
-        list.add(new Movimiento(
-            rs.getInt("id"),
-            rs.getInt("tarjeta_id"),
-            rs.getDate("fecha").toLocalDate(),
-            rs.getString("descripcion"),
-            rs.getBigDecimal("monto"),
-            rs.getString("categoria"),
-            rs.getString("moneda"),
-            rs.getInt("cuotas")
-        ));
+        Movimiento mov = mapRow(rs);
+        // Usamos el nombre del comercio como descripción para mostrar en la UI
+        mov.setDescripcion(rs.getString("label"));
+        lista.add(mov);
       }
     }
-    return list;
+    return lista;
   }
 
   /**
    * Para el período dado retorna:
    * - Movimientos de cuota única cuya fecha cae en el período
    * - Movimientos en cuotas que tienen al menos una cuota con
-   * fecha_vencimiento dentro del período
+   *   fecha_vencimiento dentro del período
+   * Incluye el nombre del comercio como descripción via JOIN.
    */
   public List<Movimiento> findByTarjetaEnRangoPeriodo(int tarjetaId, LocalDate desde, LocalDate hasta)
       throws SQLException {
     String sql =
-        "SELECT DISTINCT m.* FROM movimiento m " +
+        "SELECT DISTINCT m.*, COALESCE(co.nombre, m.descripcion) AS label " +
+            "FROM movimiento m " +
+            "LEFT JOIN comercio co ON co.id = m.comercio_id " +
             "WHERE m.tarjeta_id = ? AND (" +
             "  (m.cuotas = 1 AND m.fecha BETWEEN ? AND ?) " +
             "  OR " +
             "  (m.cuotas > 1 AND EXISTS (" +
-            "    SELECT 1 FROM cuota c " +
-            "    WHERE c.movimiento_id = m.id " +
-            "    AND c.fecha_vencimiento BETWEEN ? AND ?" +
+            "    SELECT 1 FROM cuota cu " +
+            "    WHERE cu.movimiento_id = m.id " +
+            "    AND cu.fecha_vencimiento BETWEEN ? AND ?" +
             "  ))" +
-            ")ORDER BY m.fecha ASC";
+            ") ORDER BY m.fecha ASC";
 
     List<Movimiento> lista = new ArrayList<>();
-    try (Connection conn = Db.getDataSource().getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+    try (Connection c = Db.getDataSource().getConnection();
+         PreparedStatement ps = c.prepareStatement(sql)) {
       ps.setInt(1, tarjetaId);
       ps.setDate(2, Date.valueOf(desde));
       ps.setDate(3, Date.valueOf(hasta));
@@ -154,41 +163,31 @@ public class MovimientoDao {
       ps.setDate(5, Date.valueOf(hasta));
       ResultSet rs = ps.executeQuery();
       while (rs.next()) {
-        lista.add(new Movimiento(
-            rs.getInt("id"),
-            rs.getInt("tarjeta_id"),
-            rs.getDate("fecha").toLocalDate(),
-            rs.getString("descripcion"),
-            rs.getBigDecimal("monto"),
-            rs.getString("categoria"),
-            rs.getString("moneda"),
-            rs.getInt("cuotas")
-        ));
+        Movimiento mov = mapRow(rs);
+        mov.setDescripcion(rs.getString("label"));
+        lista.add(mov);
       }
     }
     return lista;
   }
 
-// --- Eliminación con cuotas en transacción ---
+  // --- Eliminación con cuotas en transacción ---
 
   /**
-   * Elimina un movimiento y todas sus cuotas asociadas en una sola transacción.
-   * Las cuotas se borran primero para respetar la FK, luego el movimiento.
+   * Elimina un movimiento y todas sus cuotas en una sola transacción.
+   * Las cuotas se borran primero para respetar la FK.
    */
   public void delete(int movimientoId) throws SQLException {
-    String sqlCuotas = "DELETE FROM cuota WHERE movimiento_id = ?";
-    String sqlMovimiento = "DELETE FROM movimiento WHERE id = ?";
-
     try (Connection c = Db.getDataSource().getConnection()) {
       c.setAutoCommit(false);
       try {
-        // Primero borramos las cuotas
-        try (PreparedStatement ps = c.prepareStatement(sqlCuotas)) {
+        try (PreparedStatement ps = c.prepareStatement(
+            "DELETE FROM cuota WHERE movimiento_id = ?")) {
           ps.setInt(1, movimientoId);
           ps.executeUpdate();
         }
-        // Luego el movimiento
-        try (PreparedStatement ps = c.prepareStatement(sqlMovimiento)) {
+        try (PreparedStatement ps = c.prepareStatement(
+            "DELETE FROM movimiento WHERE id = ?")) {
           ps.setInt(1, movimientoId);
           ps.executeUpdate();
         }
@@ -202,30 +201,36 @@ public class MovimientoDao {
     }
   }
 
-// --- Edición con recálculo de cuotas ---
+  // --- Edición con recálculo de cuotas ---
 
   /**
-   * Actualiza fecha, descripcion, monto y cuotas de un movimiento.
-   * Si cambiaron las cuotas o el monto, borra las cuotas viejas y genera las nuevas.
+   * Actualiza fecha, comercio_id, descripcion, monto y cuotas de un movimiento.
+   * Borra las cuotas viejas y regenera si corresponde.
    */
   public void update(Movimiento m) throws SQLException {
-    String sqlUpdate = "UPDATE movimiento SET fecha=?, descripcion=?, monto=?, cuotas=? WHERE id=?";
+    String sql = "UPDATE movimiento SET fecha=?, comercio_id=?, descripcion=?, monto=?, cuotas=? WHERE id=?";
 
     try (Connection c = Db.getDataSource().getConnection()) {
       c.setAutoCommit(false);
       try {
-        // Actualizamos el movimiento
-        try (PreparedStatement ps = c.prepareStatement(sqlUpdate)) {
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
           ps.setDate(1, Date.valueOf(m.getFecha()));
-          ps.setString(2, m.getDescripcion());
-          ps.setBigDecimal(3, m.getMonto());
-          ps.setInt(4, m.getCuotas());
-          ps.setInt(5, m.getId());
+          if (m.getComercioId() > 0) {
+            ps.setInt(2, m.getComercioId());
+          } else {
+            ps.setNull(2, Types.INTEGER);
+          }
+          ps.setString(3, m.getDescripcion() != null
+              ? m.getDescripcion().toUpperCase().trim() : null);
+          ps.setBigDecimal(4, m.getMonto());
+          ps.setInt(5, m.getCuotas());
+          ps.setInt(6, m.getId());
           ps.executeUpdate();
         }
 
-        // Borramos cuotas viejas y regeneramos si corresponde
-        try (PreparedStatement ps = c.prepareStatement("DELETE FROM cuota WHERE movimiento_id = ?")) {
+        // Borramos cuotas viejas y regeneramos
+        try (PreparedStatement ps = c.prepareStatement(
+            "DELETE FROM cuota WHERE movimiento_id = ?")) {
           ps.setInt(1, m.getId());
           ps.executeUpdate();
         }
@@ -244,4 +249,19 @@ public class MovimientoDao {
     }
   }
 
+  // --- Helper ---
+
+  private Movimiento mapRow(ResultSet rs) throws SQLException {
+    return new Movimiento(
+        rs.getInt("id"),
+        rs.getInt("tarjeta_id"),
+        rs.getInt("comercio_id"),
+        rs.getDate("fecha").toLocalDate(),
+        rs.getString("descripcion"),
+        rs.getBigDecimal("monto"),
+        rs.getString("categoria"),
+        rs.getString("moneda"),
+        rs.getInt("cuotas")
+    );
+  }
 }

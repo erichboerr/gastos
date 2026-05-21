@@ -1,13 +1,7 @@
 package ar.com.gastos.controller;
 
-import ar.com.gastos.dao.CierreTarjetaDao;
-import ar.com.gastos.dao.IngresoDao;
-import ar.com.gastos.dao.MovimientoDao;
-import ar.com.gastos.dao.TarjetaDao;
-import ar.com.gastos.model.CierreTarjeta;
-import ar.com.gastos.model.Ingreso;
-import ar.com.gastos.model.Movimiento;
-import ar.com.gastos.model.Tarjeta;
+import ar.com.gastos.dao.*;
+import ar.com.gastos.model.*;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -24,7 +18,6 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.time.YearMonth;
 import java.time.format.TextStyle;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -63,10 +56,11 @@ public class ResumenAnualController {
     double sumaEgresos  = 0;
 
     try {
-      IngresoDao ingresoDao       = new IngresoDao();
-      TarjetaDao tarjetaDao       = new TarjetaDao();
+      IngresoDao ingresoDao = new IngresoDao();
+      TarjetaDao tarjetaDao = new TarjetaDao();
       MovimientoDao movimientoDao = new MovimientoDao();
       CierreTarjetaDao cierreDao  = new CierreTarjetaDao();
+      CuotaDao cuotaDao = new CuotaDao();
 
       List<Ingreso> todosLosIngresos = ingresoDao.listarIngresos();
       List<Tarjeta> tarjetas         = tarjetaDao.findAllActivas();
@@ -82,23 +76,41 @@ public class ResumenAnualController {
               .mapToDouble(BigDecimal::doubleValue)
               .sum();
 
+
         // Egresos del mes (sumamos todas las tarjetas)
+
         double egrMes = 0;
         for (Tarjeta t : tarjetas) {
           CierreTarjeta cierreMes = cierreDao.findCierrePorMes(t.getId(), ym);
           if (cierreMes != null) {
             CierreTarjeta anterior = cierreDao.findAnteriorPorTarjeta(
-                  t.getId(), cierreMes.getFechaCierre());
+                t.getId(), cierreMes.getFechaCierre());
 
             LocalDate desde = (anterior != null)
-                  ? anterior.getFechaCierre().plusDays(1)
-                  : cierreMes.getMes();
+                ? anterior.getFechaCierre().plusDays(1)
+                : cierreMes.getMes();
             LocalDate hasta = cierreMes.getFechaCierre();
 
-            List<Movimiento> movs = movimientoDao.findByTarjetaEnRangoPeriodo(t.getId(), desde, hasta);
+            List<Movimiento> movs = movimientoDao.findByTarjetaEnRangoPeriodo(
+                t.getId(), desde, hasta);
+
             for (Movimiento m : movs) {
               if ("EGRESO".equals(m.getCategoria())) {
-                egrMes += m.getMonto().doubleValue();
+                if (m.getCuotas() == 1) {
+                  // Pago único — suma el monto directamente
+                  egrMes += m.getMonto().doubleValue();
+                } else {
+                  // En cuotas — sumamos solo la cuota que vence en el período
+                  List<ar.com.gastos.model.Cuota> cuotas =
+                      cuotaDao.findByMovimiento(m.getId());
+                  for (ar.com.gastos.model.Cuota c : cuotas) {
+                    if (!c.getFechaVencimiento().isBefore(desde) &&
+                        !c.getFechaVencimiento().isAfter(hasta)) {
+                      egrMes += c.getMonto().doubleValue();
+                      break;
+                    }
+                  }
+                }
               }
             }
           }

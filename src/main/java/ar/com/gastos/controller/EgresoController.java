@@ -1,7 +1,9 @@
 package ar.com.gastos.controller;
 
-import ar.com.gastos.dao.EgresoDao;
+import ar.com.gastos.dao.ComercioDao;
+import ar.com.gastos.dao.MovimientoDao;
 import ar.com.gastos.dao.TarjetaDao;
+import ar.com.gastos.model.Comercio;
 import ar.com.gastos.model.Movimiento;
 import ar.com.gastos.model.Tarjeta;
 import ar.com.gastos.util.MovimientoEventBus;
@@ -22,23 +24,25 @@ public class EgresoController {
 
     private static final Logger logger = LoggerFactory.getLogger(EgresoController.class);
 
-    @FXML private ComboBox<String> cmbTarjeta;
-    @FXML private ComboBox<String> cmbDescripcion;
-    @FXML private DatePicker txtFecha;
-    @FXML private TextField txtMonto;
-    @FXML private TextField txtCuotas;
+    @FXML private ComboBox<String>   cmbTarjeta;
+    @FXML private ComboBox<Comercio> cmbDescripcion;
+    @FXML private DatePicker         txtFecha;
+    @FXML private TextField          txtMonto;
+    @FXML private TextField          txtCuotas;
 
     @FXML
     public void initialize() {
         cargarTarjetas();
-        cargarDescripciones();
+        cargarComercios();
+        // Permitimos escribir en el combo para filtrar
+        cmbDescripcion.setEditable(true);
     }
 
-    // Carga las tarjetas activas en el ComboBox de tarjetas
+    // Carga las tarjetas activas en el ComboBox
     private void cargarTarjetas() {
         try {
-            TarjetaDao tarjetaDao = new TarjetaDao();
-            List<Tarjeta> tarjetas = tarjetaDao.findAllActivas();
+            TarjetaDao dao = new TarjetaDao();
+            List<Tarjeta> tarjetas = dao.findAllActivas();
             cmbTarjeta.getItems().clear();
             for (Tarjeta t : tarjetas) {
                 cmbTarjeta.getItems().add(t.getNombre());
@@ -48,43 +52,57 @@ public class EgresoController {
         }
     }
 
-    // Carga las descripciones distintas que ya existen en movimientos de tipo EGRESO.
-    // Como todas se guardan en mayúsculas, no hay duplicados por capitalización.
-    private void cargarDescripciones() {
+    // Carga el catálogo de comercios habilitados desde la tabla comercio
+    private void cargarComercios() {
         try {
-            EgresoDao egresoDao = new EgresoDao();
-            List<String> descripciones = egresoDao.findDescripcionesDistintas();
+            ComercioDao dao = new ComercioDao();
+            List<Comercio> comercios = dao.findAllActivos();
             cmbDescripcion.getItems().clear();
-            cmbDescripcion.getItems().addAll(descripciones);
-
-            // Permitimos que el usuario escriba en el combo si quiere filtrar
-            cmbDescripcion.setEditable(true);
+            cmbDescripcion.getItems().addAll(comercios);
         } catch (Exception e) {
-            logger.error("Error al cargar descripciones", e);
+            logger.error("Error al cargar comercios", e);
         }
     }
 
-    // Abre un diálogo para ingresar una nueva descripción que no existe todavía.
-    // La agrega al ComboBox y la selecciona automáticamente — no la guarda en la base
-    // hasta que el usuario confirme el egreso con "Guardar".
+    // Abre diálogo para crear un comercio nuevo en el momento
     @FXML
     private void nuevaDescripcion() {
         TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Nueva descripción");
+        dialog.setTitle("Nuevo comercio");
         dialog.setHeaderText(null);
-        dialog.setContentText("Ingresá la nueva descripción:");
+        dialog.setContentText("Nombre del comercio:");
 
         Optional<String> resultado = dialog.showAndWait();
         resultado.ifPresent(texto -> {
-            // Normalizamos a mayúsculas y sin espacios extra, igual que al guardar
-            String nueva = texto.toUpperCase().trim();
-            if (!nueva.isEmpty()) {
-                // Si ya existe en el combo no la duplicamos
-                if (!cmbDescripcion.getItems().contains(nueva)) {
-                    cmbDescripcion.getItems().add(nueva);
+            String nombre = texto.toUpperCase().trim();
+            if (nombre.isEmpty()) return;
+
+            try {
+                ComercioDao dao = new ComercioDao();
+
+                // Verificamos si ya existe (activo o dado de baja)
+                Comercio existente = dao.findByNombre(nombre);
+                if (existente != null) {
+                    // Ya existe — lo seleccionamos directamente
+                    cmbDescripcion.setValue(existente);
+                    return;
                 }
-                // La seleccionamos para que quede lista para usar
-                cmbDescripcion.setValue(nueva);
+
+                // Creamos el comercio nuevo sin categoría por ahora
+                Comercio nuevo = new Comercio(nombre, null);
+                dao.save(nuevo);
+
+                // Recargamos y seleccionamos el nuevo
+                cargarComercios();
+                cmbDescripcion.getItems().stream()
+                    .filter(c -> c.getNombre().equals(nombre))
+                    .findFirst()
+                    .ifPresent(cmbDescripcion::setValue);
+
+                logger.info("Comercio creado: {}", nombre);
+
+            } catch (SQLException ex) {
+                logger.error("Error al crear comercio", ex);
             }
         });
     }
@@ -93,13 +111,44 @@ public class EgresoController {
     private void guardarMovimiento() {
         String tarjetaNombre = cmbTarjeta.getValue();
         if (tarjetaNombre == null || tarjetaNombre.isEmpty()) {
-            Toast.show((Stage) txtFecha.getScene().getWindow(), "Debe seleccionar una tarjeta");
+            Toast.show(getStage(), "Debe seleccionar una tarjeta");
             return;
         }
 
-        String descripcion = cmbDescripcion.getValue();
-        if (descripcion == null || descripcion.isBlank()) {
-            Toast.show((Stage) txtFecha.getScene().getWindow(), "Debe ingresar una descripción");
+        // El ComboBox editable puede tener un objeto Comercio seleccionado
+        // o un String escrito a mano — manejamos ambos casos
+        Comercio comercio = null;
+        Object valor = cmbDescripcion.getValue();
+        if (valor instanceof Comercio) {
+            comercio = (Comercio) valor;
+        } else if (valor instanceof String) {
+            // El usuario escribió un nombre — buscamos o creamos el comercio
+            String nombre = ((String) valor).toUpperCase().trim();
+            if (!nombre.isEmpty()) {
+                try {
+                    ComercioDao dao = new ComercioDao();
+                    comercio = dao.findByNombre(nombre);
+                    if (comercio == null) {
+                        // Lo creamos on the fly
+                        Comercio nuevo = new Comercio(nombre, null);
+                        dao.save(nuevo);
+                        cargarComercios();
+                        comercio = dao.findByNombre(nombre);
+                    }
+                } catch (SQLException ex) {
+                    logger.error("Error al buscar/crear comercio", ex);
+                }
+            }
+        }
+
+        if (comercio == null) {
+            Toast.show(getStage(), "Debe seleccionar o ingresar un comercio");
+            return;
+        }
+
+        LocalDate fecha = txtFecha.getValue();
+        if (fecha == null) {
+            Toast.show(getStage(), "Debe seleccionar una fecha");
             return;
         }
 
@@ -107,13 +156,7 @@ public class EgresoController {
             TarjetaDao tarjetaDao = new TarjetaDao();
             Tarjeta tarjeta = tarjetaDao.findByNombre(tarjetaNombre);
             if (tarjeta == null) {
-                Toast.show((Stage) txtFecha.getScene().getWindow(), "Tarjeta no encontrada en la base");
-                return;
-            }
-
-            LocalDate fecha = txtFecha.getValue();
-            if (fecha == null) {
-                Toast.show((Stage) txtFecha.getScene().getWindow(), "Debe seleccionar una fecha");
+                Toast.show(getStage(), "Tarjeta no encontrada");
                 return;
             }
 
@@ -121,33 +164,31 @@ public class EgresoController {
             int cuotas = txtCuotas.getText().isEmpty() ? 1 : Integer.parseInt(txtCuotas.getText());
 
             Movimiento movimiento = new Movimiento(
-                  tarjeta.getId(),
-                  fecha,
-                  descripcion,   // EgresoDao.save() la convierte a mayúsculas antes de insertar
-                  monto,
-                  "EGRESO",
-                  "ARS",
-                  cuotas
+                tarjeta.getId(),
+                comercio.getId(),
+                fecha,
+                monto,
+                "ARS",
+                cuotas
             );
 
-            EgresoDao dao = new EgresoDao();
-            dao.save(movimiento);
+            new MovimientoDao().save(movimiento);
 
-            // Recargamos el combo para que la nueva descripción aparezca la próxima vez
-            cargarDescripciones();
-
-            Toast.show((Stage) txtFecha.getScene().getWindow(),
-                  "Egreso guardado en " + tarjetaNombre + " por $" + monto);
-
+            cargarComercios();
+            Toast.show(getStage(), "Egreso guardado en " + tarjetaNombre + " por $" + monto);
             MovimientoEventBus.publish(tarjetaNombre);
-            logger.info("Egreso guardado en tarjeta {} por {}", tarjetaNombre, monto);
+            logger.info("Egreso guardado: {} en {} por ${}", comercio.getNombre(), tarjetaNombre, monto);
 
         } catch (SQLException ex) {
-            Toast.show((Stage) txtFecha.getScene().getWindow(), "Error al guardar egreso");
+            Toast.show(getStage(), "Error al guardar egreso");
             logger.error("Error al guardar egreso", ex);
         } catch (NumberFormatException ex) {
-            Toast.show((Stage) txtFecha.getScene().getWindow(), "Monto/cuotas inválido");
+            Toast.show(getStage(), "Monto/cuotas inválido");
             logger.error("Error en formato de monto/cuotas", ex);
         }
+    }
+
+    private Stage getStage() {
+        return (Stage) cmbTarjeta.getScene().getWindow();
     }
 }

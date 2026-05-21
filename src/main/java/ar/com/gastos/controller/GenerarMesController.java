@@ -143,14 +143,14 @@ public class GenerarMesController {
         BigDecimal monto = new BigDecimal(montoStr).setScale(2);
         GastoRecurrente g = item.getGastoRecurrente();
 
+        // Constructor para recurrentes — descripción libre, sin comercio_id
         Movimiento mov = new Movimiento(
             tarjetaDebito.getId(),
-            fechaMes,                       // fecha = primer día del mes
+            fechaMes,
             g.getDescripcion().toUpperCase(),
             monto,
             "EGRESO",
-            "ARS",
-            1                               // siempre cuota única
+            "ARS"
         );
 
         MovimientoDao dao = new MovimientoDao();

@@ -4,20 +4,25 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class Movimiento {
+
   private int id;
   private int tarjetaId;
+  private int comercioId;      // 0 = sin comercio (pagos)
   private LocalDate fecha;
-  private String descripcion;
+  private String descripcion;  // solo para pagos y recurrentes
   private BigDecimal monto;
   private String categoria;
   private String moneda;
   private int cuotas;
-  private String cuotaTexto;
+  private String cuotaTexto;   // campo calculado, no se persiste
 
-  public Movimiento(int id, int tarjetaId, LocalDate fecha, String descripcion,
-                    BigDecimal monto, String categoria, String moneda, int cuotas) {
+  // --- Constructor completo — usado al leer desde la DB ---
+  public Movimiento(int id, int tarjetaId, int comercioId, LocalDate fecha,
+                    String descripcion, BigDecimal monto, String categoria,
+                    String moneda, int cuotas) {
     this.id = id;
     this.tarjetaId = tarjetaId;
+    this.comercioId = comercioId;
     this.fecha = fecha;
     this.descripcion = descripcion;
     this.monto = monto;
@@ -27,13 +32,30 @@ public class Movimiento {
     this.cuotaTexto = "";
   }
 
-  // Constructor para insertar
-  public Movimiento(int tarjetaId, LocalDate fecha, String descripcion,
-                    BigDecimal monto, String categoria, String moneda, int cuotas) {
-    this(0, tarjetaId, fecha, descripcion, monto, categoria, moneda, cuotas);
+  // --- Constructor para EGRESO — con comercio, sin descripción libre ---
+  public Movimiento(int tarjetaId, int comercioId, LocalDate fecha,
+                    BigDecimal monto, String moneda, int cuotas) {
+    this(0, tarjetaId, comercioId, fecha, null, monto, "EGRESO", moneda, cuotas);
   }
 
-  // Getters y setters...
+  // --- Constructor para PAGO — sin comercio, con descripción libre ---
+  public Movimiento(int tarjetaId, LocalDate fecha, String descripcion,
+                    BigDecimal monto, String moneda) {
+    this(0, tarjetaId, 0, fecha, descripcion, monto, "PAGO", moneda, 1);
+  }
+
+  // --- Constructor para RECURRENTES — con comercio, cuota única ---
+  public Movimiento(int tarjetaId, int comercioId, LocalDate fecha, BigDecimal monto, String moneda) {
+    this(0, tarjetaId, comercioId, fecha, null, monto, "EGRESO", moneda, 1);
+  }
+
+  // --- Constructor para recurrentes — descripción libre, categoría EGRESO, cuota única ---
+  public Movimiento(int tarjetaId, LocalDate fecha, String descripcion,
+                    BigDecimal monto, String categoria, String moneda) {
+    this(0, tarjetaId, 0, fecha, descripcion, monto, categoria, moneda, 1);
+  }
+
+  // --- Getters y Setters ---
 
   public int getId() {
     return id;
@@ -49,6 +71,14 @@ public class Movimiento {
 
   public void setTarjetaId(int tarjetaId) {
     this.tarjetaId = tarjetaId;
+  }
+
+  public int getComercioId() {
+    return comercioId;
+  }
+
+  public void setComercioId(int comercioId) {
+    this.comercioId = comercioId;
   }
 
   public LocalDate getFecha() {
@@ -100,11 +130,10 @@ public class Movimiento {
   }
 
   public String getCuotaTexto() {
-    return cuotaTexto;  }
+    return cuotaTexto;
+  }
 
   public void setCuotaTexto(String cuotaTexto) {
     this.cuotaTexto = cuotaTexto;
   }
-
 }
-

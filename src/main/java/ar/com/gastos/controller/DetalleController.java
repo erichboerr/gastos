@@ -35,18 +35,28 @@ public class DetalleController {
 
   private static final Logger logger = LoggerFactory.getLogger(DetalleController.class);
 
-  @FXML private Label lblTitulo;
-  @FXML private Label lblMes;
-  @FXML private Label lblTotalMes;
-  @FXML private Label lblConsumos;
-  @FXML private Label lblPagos;
-  @FXML private Label lblSaldo;
-  @FXML private TableView<Movimiento> tablaMovimientos;
-  @FXML private TableColumn<Movimiento, LocalDate>  colFecha;
-  @FXML private TableColumn<Movimiento, String>     colDescripcion;
-  @FXML private TableColumn<Movimiento, BigDecimal> colMonto;
-  @FXML private TableColumn<Movimiento, String>     colCuota;
-  @FXML private TableColumn<Movimiento, Void>       colAcciones;
+  @FXML
+  private Label lblTitulo;
+  @FXML
+  private Label lblMes;
+  @FXML
+  private Label lblConsumos;
+  @FXML
+  private Label lblPagos;
+  @FXML
+  private Label lblSaldo;
+  @FXML
+  private TableView<Movimiento> tablaMovimientos;
+  @FXML
+  private TableColumn<Movimiento, LocalDate> colFecha;
+  @FXML
+  private TableColumn<Movimiento, String> colDescripcion;
+  @FXML
+  private TableColumn<Movimiento, BigDecimal> colMonto;
+  @FXML
+  private TableColumn<Movimiento, String> colCuota;
+  @FXML
+  private TableColumn<Movimiento, Void> colAcciones;
 
 
   private Tarjeta tarjetaActual;
@@ -56,7 +66,10 @@ public class DetalleController {
 
   private static final NumberFormat CURRENCY =
       NumberFormat.getCurrencyInstance(new Locale("es", "AR"));
-  static { CURRENCY.setMaximumFractionDigits(2); }
+
+  static {
+    CURRENCY.setMaximumFractionDigits(2);
+  }
 
   // --- Recibe la tarjeta y el mes visible desde DashboardController ---
 
@@ -97,9 +110,9 @@ public class DetalleController {
 
     // Columna de acciones: Editar + Eliminar por fila
     colAcciones.setCellFactory(col -> new TableCell<>() {
-      private final Button btnEditar   = new Button("Editar");
+      private final Button btnEditar = new Button("Editar");
       private final Button btnEliminar = new Button("Eliminar");
-      private final HBox   hbox        = new HBox(6, btnEditar, btnEliminar);
+      private final HBox hbox = new HBox(6, btnEditar, btnEliminar);
 
       {
         btnEditar.setStyle("-fx-background-color:#2c3e50; -fx-text-fill:white; -fx-font-size:11;");
@@ -157,9 +170,9 @@ public class DetalleController {
     lblMes.setText(nombreMes + " " + mesVisible.getYear());
 
     try {
-      MovimientoDao movimientoDao   = new MovimientoDao();
-      CuotaDao cuotaDao             = new CuotaDao();
-      CierreTarjetaDao cierreDao    = new CierreTarjetaDao();
+      MovimientoDao movimientoDao = new MovimientoDao();
+      CuotaDao cuotaDao = new CuotaDao();
+      CierreTarjetaDao cierreDao = new CierreTarjetaDao();
 
       // Buscamos el cierre del mes visible para esta tarjeta
       CierreTarjeta cierreMes = cierreDao.findCierrePorMes(tarjetaActual.getId(), mesVisible);
@@ -181,20 +194,21 @@ public class DetalleController {
       movimientos = movimientoDao.findByTarjetaEnRangoPeriodo(
           tarjetaActual.getId(), desde, hasta);
 
-      // Calculamos el total del mes y armamos el texto de cuota por fila
-      BigDecimal totalMes = BigDecimal.ZERO;
-
       // Calculamos consumos y pagos del período por separado
       BigDecimal totalConsumos = BigDecimal.ZERO;
-      BigDecimal totalPagos    = BigDecimal.ZERO;
+      BigDecimal totalPagos = BigDecimal.ZERO;
 
       for (Movimiento m : movimientos) {
-        if ("EGRESO".equals(m.getCategoria())) {
+        if ("PAGO".equals(m.getCategoria())) {
+          m.setCuotaTexto("Pago");
+          totalPagos = totalPagos.add(m.getMonto());
+
+        } else if ("EGRESO".equals(m.getCategoria())) {
           if (m.getCuotas() == 1) {
             m.setCuotaTexto("Pago único");
             totalConsumos = totalConsumos.add(m.getMonto());
           } else {
-            // Mostramos la cuota que vence en el período
+            // Sumamos solo la cuota que vence en el período
             List<Cuota> cuotas = cuotaDao.findByMovimiento(m.getId());
             for (Cuota c : cuotas) {
               if (!c.getFechaVencimiento().isBefore(desde) &&
@@ -206,19 +220,14 @@ public class DetalleController {
               }
             }
           }
-        } else if ("PAGO".equals(m.getCategoria())) {
-          totalPagos = totalPagos.add(m.getMonto());
-          m.setCuotaTexto("-");
-        } else {
-          m.setCuotaTexto("-");
         }
       }
 
       BigDecimal saldo = totalConsumos.subtract(totalPagos);
 
       lblConsumos.setText("Consumos: " + CURRENCY.format(totalConsumos));
-      lblPagos.setText("Pagos: "    + CURRENCY.format(totalPagos));
-      lblSaldo.setText("Saldo: "    + CURRENCY.format(saldo));
+      lblPagos.setText("Pagos: " + CURRENCY.format(totalPagos));
+      lblSaldo.setText("Saldo: " + CURRENCY.format(saldo));
 
 // Color del saldo: rojo si positivo (debe), verde si cero o negativo (a favor)
       lblSaldo.setStyle(saldo.compareTo(BigDecimal.ZERO) > 0
@@ -226,9 +235,6 @@ public class DetalleController {
           : "-fx-font-size:12; -fx-font-weight:bold; -fx-text-fill:#27ae60;");
 
 // Ya no usamos lblTotalMes — podés eliminarlo del FXML y del controller
-      tablaMovimientos.setItems(FXCollections.observableArrayList(movimientos));
-
-      lblTotalMes.setText("Total del mes: " + CURRENCY.format(totalMes));
       tablaMovimientos.setItems(FXCollections.observableArrayList(movimientos));
 
     } catch (Exception ex) {
