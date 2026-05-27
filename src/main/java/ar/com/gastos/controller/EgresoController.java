@@ -8,6 +8,8 @@ import ar.com.gastos.model.Movimiento;
 import ar.com.gastos.model.Tarjeta;
 import ar.com.gastos.util.MovimientoEventBus;
 import ar.com.gastos.util.Toast;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
@@ -19,6 +21,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class EgresoController {
 
@@ -30,12 +33,14 @@ public class EgresoController {
     @FXML private TextField          txtMonto;
     @FXML private TextField          txtCuotas;
 
+    // Lista completa de comercios — usada como base para el filtro
+    private ObservableList<Comercio> todosLosComercios = FXCollections.observableArrayList();
+
     @FXML
     public void initialize() {
         cargarTarjetas();
         cargarComercios();
-        // Permitimos escribir en el combo para filtrar
-        cmbDescripcion.setEditable(true);
+        configurarFiltroComercios();
     }
 
     // Carga las tarjetas activas en el ComboBox
@@ -52,22 +57,58 @@ public class EgresoController {
         }
     }
 
-    // Carga el catálogo de comercios habilitados desde la tabla comercio
+    // Carga el catálogo completo de comercios habilitados
     private void cargarComercios() {
         try {
             ComercioDao dao = new ComercioDao();
             List<Comercio> comercios = dao.findAllActivos();
-            cmbDescripcion.getItems().clear();
-            cmbDescripcion.getItems().addAll(comercios);
+            todosLosComercios.setAll(comercios);
+            cmbDescripcion.setItems(FXCollections.observableArrayList(comercios));
         } catch (Exception e) {
             logger.error("Error al cargar comercios", e);
         }
     }
 
+    /**
+     * Configura el filtro automático del ComboBox mientras el usuario escribe.
+     * Cada vez que cambia el texto del editor, filtramos la lista de comercios
+     * mostrando solo los que contienen el texto ingresado.
+     */
+    private void configurarFiltroComercios() {
+        cmbDescripcion.setEditable(true);
+
+        cmbDescripcion.getEditor().textProperty().addListener((obs, anterior, nuevo) -> {
+            // Si el texto cambió porque el usuario seleccionó un item, no filtramos
+            Comercio seleccionado = cmbDescripcion.getValue();
+            if (seleccionado != null && seleccionado.getNombre().equalsIgnoreCase(nuevo)) return;
+
+            String filtro = nuevo == null ? "" : nuevo.toUpperCase().trim();
+
+            if (filtro.isEmpty()) {
+                // Sin texto — mostramos todos
+                cmbDescripcion.setItems(FXCollections.observableArrayList(todosLosComercios));
+            } else {
+                // Filtramos los que contienen el texto en cualquier posición
+                List<Comercio> filtrados = todosLosComercios.stream()
+                    .filter(c -> c.getNombre().toUpperCase().contains(filtro))
+                    .collect(Collectors.toList());
+                cmbDescripcion.setItems(FXCollections.observableArrayList(filtrados));
+            }
+
+            // Mostramos el popup con los resultados filtrados
+            if (!cmbDescripcion.isShowing()) {
+                cmbDescripcion.show();
+            }
+        });
+    }
+
     // Abre diálogo para crear un comercio nuevo en el momento
     @FXML
     private void nuevaDescripcion() {
-        TextInputDialog dialog = new TextInputDialog();
+        // Tomamos el texto que ya escribió el usuario como valor inicial del diálogo
+        String textoActual = cmbDescripcion.getEditor().getText().toUpperCase().trim();
+
+        TextInputDialog dialog = new TextInputDialog(textoActual);
         dialog.setTitle("Nuevo comercio");
         dialog.setHeaderText(null);
         dialog.setContentText("Nombre del comercio:");
@@ -80,20 +121,18 @@ public class EgresoController {
             try {
                 ComercioDao dao = new ComercioDao();
 
-                // Verificamos si ya existe (activo o dado de baja)
                 Comercio existente = dao.findByNombre(nombre);
                 if (existente != null) {
-                    // Ya existe — lo seleccionamos directamente
                     cmbDescripcion.setValue(existente);
                     return;
                 }
 
-                // Creamos el comercio nuevo sin categoría por ahora
                 Comercio nuevo = new Comercio(nombre, null);
                 dao.save(nuevo);
 
-                // Recargamos y seleccionamos el nuevo
                 cargarComercios();
+
+                // Seleccionamos el recién creado
                 cmbDescripcion.getItems().stream()
                     .filter(c -> c.getNombre().equals(nombre))
                     .findFirst()
@@ -115,21 +154,17 @@ public class EgresoController {
             return;
         }
 
-        // El ComboBox editable puede tener un objeto Comercio seleccionado
-        // o un String escrito a mano — manejamos ambos casos
         Comercio comercio = null;
         Object valor = cmbDescripcion.getValue();
         if (valor instanceof Comercio) {
             comercio = (Comercio) valor;
         } else if (valor instanceof String) {
-            // El usuario escribió un nombre — buscamos o creamos el comercio
             String nombre = ((String) valor).toUpperCase().trim();
             if (!nombre.isEmpty()) {
                 try {
                     ComercioDao dao = new ComercioDao();
                     comercio = dao.findByNombre(nombre);
                     if (comercio == null) {
-                        // Lo creamos on the fly
                         Comercio nuevo = new Comercio(nombre, null);
                         dao.save(nuevo);
                         cargarComercios();
@@ -174,7 +209,11 @@ public class EgresoController {
 
             new MovimientoDao().save(movimiento);
 
+            // Reseteamos el ComboBox para la próxima carga
+            cmbDescripcion.getEditor().clear();
+            cmbDescripcion.setValue(null);
             cargarComercios();
+
             Toast.show(getStage(), "Egreso guardado en " + tarjetaNombre + " por $" + monto);
             MovimientoEventBus.publish(tarjetaNombre);
             logger.info("Egreso guardado: {} en {} por ${}", comercio.getNombre(), tarjetaNombre, monto);

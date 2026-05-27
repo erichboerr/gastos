@@ -42,7 +42,7 @@ public class GastoRecurrenteDao {
     String sql = "INSERT INTO gastos_recurrentes (descripcion, categoria, medio_pago) VALUES (?, ?, ?)";
     try (Connection conn = Db.getDataSource().getConnection();
          PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setString(1, g.getDescripcion());
+      ps.setString(1, g.getDescripcion().toUpperCase().trim());
       ps.setString(2, g.getCategoria());
       ps.setString(3, g.getMedioPago());
       ps.executeUpdate();

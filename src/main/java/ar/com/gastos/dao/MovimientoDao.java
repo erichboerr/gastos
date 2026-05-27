@@ -89,11 +89,11 @@ public class MovimientoDao {
             ? montoPorCuota.add(residuo)
             : montoPorCuota;
 
-        // Cuota 1: fecha de compra. Siguientes: día 1 del mes correspondiente.
+        // Cuota 1: fecha de compra. Siguientes: día 15 del mes correspondiente.
         // Garantiza que ninguna cuota se salte un período por caer después del cierre.
         LocalDate fechaCuota = (i == 1)
             ? fechaBase
-            : fechaBase.plusMonths(i - 1).withDayOfMonth(1);
+            : fechaBase.plusMonths(i - 1).withDayOfMonth(15);
 
         ps.setInt(1, movimientoId);
         ps.setInt(2, i);

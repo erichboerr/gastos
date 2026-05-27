@@ -147,7 +147,7 @@ public class GenerarMesController {
         Movimiento mov = new Movimiento(
             tarjetaDebito.getId(),
             fechaMes,
-            g.getDescripcion().toUpperCase(),
+            g.getDescripcion().toUpperCase().trim(),
             monto,
             "EGRESO",
             "ARS"

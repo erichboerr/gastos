@@ -300,7 +300,7 @@ public class DashboardController {
     card.setPrefHeight(120);
     card.setMaxWidth(400);
 
-    Label lblTitulo = new Label("Ingresos del mes");
+    Label lblTitulo = new Label("INGRESOS DEL MES");
     lblTitulo.getStyleClass().add("card-title");
 
     Label lblTotal = new Label("Total: " + CURRENCY.format(totalIngresos));
