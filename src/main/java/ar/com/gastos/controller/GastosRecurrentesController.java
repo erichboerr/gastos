@@ -3,10 +3,11 @@ package ar.com.gastos.controller;
 import ar.com.gastos.dao.GastoRecurrenteDao;
 import ar.com.gastos.model.GastoRecurrente;
 import ar.com.gastos.util.Toast;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,10 +19,14 @@ public class GastosRecurrentesController {
 
   private static final Logger logger = LoggerFactory.getLogger(GastosRecurrentesController.class);
 
-  @FXML private TextField txtDescripcion;
-  @FXML private TextField txtCategoria;
+  @FXML private TextField        txtDescripcion;
+  @FXML private TextField        txtCategoria;
   @FXML private ComboBox<String> cmbMedioPago;
-  @FXML private ListView<GastoRecurrente> lstRecurrentes;
+  @FXML private TableView<GastoRecurrente>        tablaRecurrentes;
+  @FXML private TableColumn<GastoRecurrente, String> colDescripcion;
+  @FXML private TableColumn<GastoRecurrente, String> colCategoria;
+  @FXML private TableColumn<GastoRecurrente, String> colMedioPago;
+  @FXML private TableColumn<GastoRecurrente, Void>   colAcciones;
 
   // Cuando estamos editando, guardamos el id aquí. -1 = modo alta.
   private int idEditando = -1;
@@ -32,17 +37,53 @@ public class GastosRecurrentesController {
     cmbMedioPago.getItems().addAll("DEBITO", "CREDITO", "EFECTIVO");
     cmbMedioPago.setValue("DEBITO");
 
-    cargarLista();
+    configurarTabla();
+    cargarTabla();
   }
 
-  // --- Carga la lista desde la DB ---
+  // --- Configuración de columnas ---
 
-  private void cargarLista() {
-    lstRecurrentes.getItems().clear();
+  private void configurarTabla() {
+    colDescripcion.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
+    colCategoria.setCellValueFactory(new PropertyValueFactory<>("categoria"));
+    colMedioPago.setCellValueFactory(new PropertyValueFactory<>("medioPago"));
+
+    // Columna de acciones: Editar + Eliminar por fila
+    colAcciones.setCellFactory(col -> new TableCell<>() {
+      private final Button btnEditar   = new Button("Editar");
+      private final Button btnEliminar = new Button("Eliminar");
+      private final HBox   hbox        = new HBox(6, btnEditar, btnEliminar);
+
+      {
+        btnEditar.setStyle("-fx-background-color:#2c3e50; -fx-text-fill:white; -fx-font-size:11;");
+        btnEliminar.setStyle("-fx-background-color:#c0392b; -fx-text-fill:white; -fx-font-size:11;");
+
+        btnEditar.setOnAction(e -> {
+          GastoRecurrente g = getTableView().getItems().get(getIndex());
+          cargarEnFormulario(g);
+        });
+
+        btnEliminar.setOnAction(e -> {
+          GastoRecurrente g = getTableView().getItems().get(getIndex());
+          confirmarEliminar(g);
+        });
+      }
+
+      @Override
+      protected void updateItem(Void item, boolean empty) {
+        super.updateItem(item, empty);
+        setGraphic(empty ? null : hbox);
+      }
+    });
+  }
+
+  // --- Carga la tabla desde la DB ---
+
+  private void cargarTabla() {
     try {
       GastoRecurrenteDao dao = new GastoRecurrenteDao();
       List<GastoRecurrente> lista = dao.findAll();
-      lstRecurrentes.getItems().addAll(lista);
+      tablaRecurrentes.setItems(FXCollections.observableArrayList(lista));
     } catch (SQLException ex) {
       logger.error("Error al cargar gastos recurrentes", ex);
     }
@@ -80,7 +121,7 @@ public class GastosRecurrentesController {
       }
 
       limpiar();
-      cargarLista();
+      cargarTabla();
 
     } catch (SQLException ex) {
       Toast.show(getStage(), "Error al guardar");
@@ -90,39 +131,36 @@ public class GastosRecurrentesController {
 
   // --- Carga el seleccionado en el formulario para editar ---
 
-  @FXML
-  private void editar() {
-    GastoRecurrente seleccionado = lstRecurrentes.getSelectionModel().getSelectedItem();
-    if (seleccionado == null) {
-      Toast.show(getStage(), "Seleccione un recurrente para editar");
-      return;
-    }
-    idEditando = seleccionado.getId();
-    txtDescripcion.setText(seleccionado.getDescripcion());
-    txtCategoria.setText(seleccionado.getCategoria() != null ? seleccionado.getCategoria() : "");
-    cmbMedioPago.setValue(seleccionado.getMedioPago());
+  private void cargarEnFormulario(GastoRecurrente g) {
+    idEditando = g.getId();
+    txtDescripcion.setText(g.getDescripcion());
+    txtCategoria.setText(g.getCategoria() != null ? g.getCategoria() : "");
+    cmbMedioPago.setValue(g.getMedioPago());
   }
 
-  // --- Baja ---
+  // --- Eliminar con confirmación ---
 
-  @FXML
-  private void eliminar() {
-    GastoRecurrente seleccionado = lstRecurrentes.getSelectionModel().getSelectedItem();
-    if (seleccionado == null) {
-      Toast.show(getStage(), "Seleccione un recurrente para eliminar");
-      return;
-    }
-    try {
-      GastoRecurrenteDao dao = new GastoRecurrenteDao();
-      dao.delete(seleccionado.getId());
-      logger.info("Gasto recurrente eliminado: {}", seleccionado.getDescripcion());
-      Toast.show(getStage(), "Recurrente eliminado");
-      limpiar();
-      cargarLista();
-    } catch (SQLException ex) {
-      Toast.show(getStage(), "Error al eliminar");
-      logger.error("Error al eliminar gasto recurrente", ex);
-    }
+  private void confirmarEliminar(GastoRecurrente g) {
+    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+    alert.setTitle("Confirmar eliminación");
+    alert.setHeaderText("¿Eliminar recurrente?");
+    alert.setContentText(g.getDescripcion());
+
+    alert.showAndWait().ifPresent(respuesta -> {
+      if (respuesta == ButtonType.OK) {
+        try {
+          GastoRecurrenteDao dao = new GastoRecurrenteDao();
+          dao.delete(g.getId());
+          logger.info("Gasto recurrente eliminado: {}", g.getDescripcion());
+          Toast.show(getStage(), "Recurrente eliminado");
+          limpiar();
+          cargarTabla();
+        } catch (SQLException ex) {
+          Toast.show(getStage(), "Error al eliminar");
+          logger.error("Error al eliminar gasto recurrente", ex);
+        }
+      }
+    });
   }
 
   // --- Limpia el formulario y vuelve a modo alta ---
@@ -134,8 +172,6 @@ public class GastosRecurrentesController {
     txtCategoria.clear();
     cmbMedioPago.setValue("DEBITO");
   }
-
-  // --- Helper para obtener el Stage desde cualquier control ---
 
   private Stage getStage() {
     return (Stage) txtDescripcion.getScene().getWindow();

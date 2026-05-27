@@ -5,7 +5,8 @@
 
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="ar.com.gastos.controller.NuevaTarjetaController"
-      spacing="12" alignment="CENTER" style="-fx-padding:24;">
+      spacing="12" alignment="TOP_CENTER" style="-fx-padding:24;"
+      prefWidth="380">
 
     <Label text="Nueva Tarjeta"
            style="-fx-font-size:16; -fx-font-weight:bold; -fx-text-fill:#2c3e50;"/>

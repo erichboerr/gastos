@@ -142,10 +142,8 @@ public class DashboardController {
     abrirFormulario("/ar/com/gastos/pago.fxml", "Registrar Pago");
   }
 
-  @FXML
-  private void abrirRecurrentes() {
-    abrirFormulario("/ar/com/gastos/gastos-recurrentes.fxml", "Gastos Recurrentes");
-  }
+  @FXML private void abrirRecurrentes()   { abrirFormulario("/ar/com/gastos/gastos-recurrentes.fxml", "Gastos Recurrentes"); }
+ // @FXML private void abrirCierreTarjeta() { abrirFormulario("/ar/com/gastos/CierreTarjeta.fxml",      "Cierre de Tarjeta"); }
 
   @FXML
   private void abrirGenerarMes() {
@@ -175,7 +173,7 @@ public class DashboardController {
   private void abrirFormulario(String fxmlPath, String titulo) {
     try {
       FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
-      Scene scene = new Scene(loader.load(), 400, 420);
+      Scene scene = new Scene(loader.load()); // ← sin tamaño fijo
       Stage stage = new Stage();
       stage.setTitle(titulo);
       stage.setScene(scene);
@@ -369,7 +367,7 @@ public class DashboardController {
       try {
         FXMLLoader loader = new FXMLLoader(
             getClass().getResource("/ar/com/gastos/detalle.fxml"));
-        Scene scene = new Scene(loader.load(), 720, 600);
+        Scene scene = new Scene(loader.load(), 800, 600);
         DetalleController ctrl = loader.getController();
         ctrl.setTarjeta(t, mesVisible); // ← pasamos el mes visible
         Stage stage = new Stage();

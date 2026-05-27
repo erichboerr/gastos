@@ -6,14 +6,13 @@
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="ar.com.gastos.controller.CierreTarjetaController"
       spacing="10" alignment="TOP_CENTER" style="-fx-padding:20;"
-      prefWidth="650">
+      prefWidth="550">
 
     <Label text="Cierres de Tarjeta"
            style="-fx-font-size:16; -fx-font-weight:bold; -fx-text-fill:#2c3e50;"/>
 
     <Separator/>
 
-    <!-- Formulario de alta / edición -->
     <Label text="Tarjeta"/>
     <ComboBox fx:id="cmbTarjeta" promptText="Seleccione tarjeta" maxWidth="Infinity"
               onAction="#onTarjetaSeleccionada"/>
@@ -37,14 +36,13 @@
 
     <Separator/>
 
-    <!-- Lista de cierres de la tarjeta seleccionada -->
     <Label text="Cierres registrados"/>
-    <TableView fx:id="tablaCierres" prefHeight="220" maxWidth="Infinity">
+    <TableView fx:id="tablaCierres" prefHeight="200" maxWidth="Infinity">
         <columns>
-            <TableColumn fx:id="colMes"         text="Mes"         prefWidth="120"/>
-            <TableColumn fx:id="colFechaCierre"  text="Cierre"      prefWidth="120"/>
-            <TableColumn fx:id="colFechaVenc"    text="Vencimiento" prefWidth="120"/>
-            <TableColumn fx:id="colAcciones"     text="Acciones"    prefWidth="170"/>
+            <TableColumn fx:id="colMes"         text="Mes"         prefWidth="110"/>
+            <TableColumn fx:id="colFechaCierre"  text="Cierre"      prefWidth="110"/>
+            <TableColumn fx:id="colFechaVenc"    text="Vencimiento" prefWidth="110"/>
+            <TableColumn fx:id="colAcciones"     text="Acciones"    prefWidth="190"/>
         </columns>
     </TableView>
 

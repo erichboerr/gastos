@@ -32,7 +32,7 @@
                 <TableColumn fx:id="colDescripcion" text="Descripción" prefWidth="260"/>
                 <TableColumn fx:id="colMonto"       text="Monto"       prefWidth="120"/>
                 <TableColumn fx:id="colCuota"       text="Tipo"         prefWidth="90"/>
-                <TableColumn fx:id="colAcciones"    text="Acciones"    prefWidth="150"/>
+                <TableColumn fx:id="colAcciones"    text="Acciones"    prefWidth="220"/>
             </columns>
         </TableView>
     </center>

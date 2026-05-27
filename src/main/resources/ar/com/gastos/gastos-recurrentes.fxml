@@ -5,14 +5,14 @@
 
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="ar.com.gastos.controller.GastosRecurrentesController"
-      spacing="12" alignment="TOP_CENTER" style="-fx-padding:20;">
+      spacing="12" alignment="TOP_CENTER" style="-fx-padding:20;"
+      prefWidth="600">
 
     <Label text="Gastos Recurrentes"
            style="-fx-font-size:16; -fx-font-weight:bold; -fx-text-fill:#2c3e50;"/>
 
     <Separator/>
 
-    <!-- Formulario de alta / edición -->
     <Label text="Descripción"/>
     <TextField fx:id="txtDescripcion" promptText="Ej: ABSA, Combustible, Celular" maxWidth="Infinity"/>
 
@@ -31,13 +31,14 @@
 
     <Separator/>
 
-    <!-- Lista de recurrentes existentes -->
     <Label text="Recurrentes cargados"/>
-    <ListView fx:id="lstRecurrentes" prefHeight="200"/>
-
-    <HBox spacing="8">
-        <Button text="Editar seleccionado"  onAction="#editar"  HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-        <Button text="Eliminar seleccionado" onAction="#eliminar" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-    </HBox>
+    <TableView fx:id="tablaRecurrentes" prefHeight="200" maxWidth="Infinity">
+        <columns>
+            <TableColumn fx:id="colDescripcion" text="Descripción" prefWidth="220"/>
+            <TableColumn fx:id="colCategoria"   text="Categoría"   prefWidth="130"/>
+            <TableColumn fx:id="colMedioPago"   text="Medio"       prefWidth="80"/>
+            <TableColumn fx:id="colAcciones"    text="Acciones"    prefWidth="150"/>
+        </columns>
+    </TableView>
 
 </VBox>

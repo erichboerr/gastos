@@ -100,23 +100,15 @@ public class DetalleController {
     });
 
     // Formato de monto en pesos
-    colMonto.setCellFactory(col -> new TableCell<>() {
-      @Override
-      protected void updateItem(BigDecimal monto, boolean empty) {
-        super.updateItem(monto, empty);
-        setText(empty || monto == null ? null : CURRENCY.format(monto));
-      }
-    });
-
-    // Columna de acciones: Editar + Eliminar por fila
     colAcciones.setCellFactory(col -> new TableCell<>() {
-      private final Button btnEditar = new Button("Editar");
+      private final Button btnEditar   = new Button("Editar");
       private final Button btnEliminar = new Button("Eliminar");
-      private final HBox hbox = new HBox(6, btnEditar, btnEliminar);
+      private final Button btnPagar    = new Button("Pagar");
 
       {
         btnEditar.setStyle("-fx-background-color:#2c3e50; -fx-text-fill:white; -fx-font-size:11;");
         btnEliminar.setStyle("-fx-background-color:#c0392b; -fx-text-fill:white; -fx-font-size:11;");
+        btnPagar.setStyle("-fx-background-color:#27ae60; -fx-text-fill:white; -fx-font-size:11;");
 
         btnEditar.setOnAction(e -> {
           Movimiento m = getTableView().getItems().get(getIndex());
@@ -127,12 +119,30 @@ public class DetalleController {
           Movimiento m = getTableView().getItems().get(getIndex());
           confirmarEliminar(m);
         });
+
+        btnPagar.setOnAction(e -> {
+          Movimiento m = getTableView().getItems().get(getIndex());
+          confirmarPago(m);
+        });
       }
 
       @Override
       protected void updateItem(Void item, boolean empty) {
         super.updateItem(item, empty);
-        setGraphic(empty ? null : hbox);
+        if (empty || getIndex() >= getTableView().getItems().size()) {
+          setGraphic(null);
+          return;
+        }
+        Movimiento m = getTableView().getItems().get(getIndex());
+        boolean esDebito = tarjetaActual != null && "DEBITO".equals(tarjetaActual.getTipo());
+        boolean esEgreso = "EGRESO".equals(m.getCategoria());
+
+        // Armamos el HBox dinámicamente según el contexto
+        HBox hbox = new HBox(6, btnEditar, btnEliminar);
+        if (esDebito && esEgreso) {
+          hbox.getChildren().add(btnPagar);
+        }
+        setGraphic(hbox);
       }
     });
 
@@ -272,6 +282,64 @@ public class DetalleController {
 
     alert.showAndWait().ifPresent(respuesta -> {
       if (respuesta == ButtonType.OK) eliminar(m);
+    });
+  }
+
+  // --- Registra el pago de un ítem de débito ---
+  private void confirmarPago(Movimiento m) {
+    // Armamos un diálogo personalizado con DatePicker + TextField de monto
+    Dialog<ButtonType> dialog = new Dialog<>();
+    dialog.setTitle("Registrar pago");
+    dialog.setHeaderText("Pagar: " + m.getDescripcion());
+
+    // Contenido del diálogo
+    DatePicker dpFecha = new DatePicker(LocalDate.now());
+    TextField txtMonto = new TextField(m.getMonto().toPlainString());
+
+    javafx.scene.layout.VBox contenido = new javafx.scene.layout.VBox(10,
+        new Label("Fecha:"), dpFecha,
+        new Label("Monto:"), txtMonto
+    );
+    contenido.setStyle("-fx-padding:10;");
+    dialog.getDialogPane().setContent(contenido);
+
+    ButtonType btnConfirmar = new ButtonType("Confirmar", ButtonBar.ButtonData.OK_DONE);
+    ButtonType btnCancelar  = new ButtonType("Cancelar",  ButtonBar.ButtonData.CANCEL_CLOSE);
+    dialog.getDialogPane().getButtonTypes().addAll(btnConfirmar, btnCancelar);
+
+    dialog.showAndWait().ifPresent(respuesta -> {
+      if (respuesta == btnConfirmar) {
+        try {
+          LocalDate fecha = dpFecha.getValue();
+          if (fecha == null) {
+            Toast.show((Stage) tablaMovimientos.getScene().getWindow(), "Debe seleccionar una fecha");
+            return;
+          }
+
+          BigDecimal monto = new BigDecimal(txtMonto.getText().trim()).setScale(2);
+
+          Movimiento pago = new Movimiento(
+              tarjetaActual.getId(),
+              fecha,
+              "PAGO " + m.getDescripcion(),
+              monto,
+              "ARS"
+          );
+
+          new MovimientoDao().save(pago);
+
+          logger.info("Pago registrado: {} - ${} - {}", m.getDescripcion(), monto, fecha);
+          MovimientoEventBus.publish("pago");
+          Toast.show((Stage) tablaMovimientos.getScene().getWindow(),
+              "Pago registrado: " + CURRENCY.format(monto));
+
+        } catch (NumberFormatException ex) {
+          Toast.show((Stage) tablaMovimientos.getScene().getWindow(), "Monto inválido");
+        } catch (Exception ex) {
+          Toast.show((Stage) tablaMovimientos.getScene().getWindow(), "Error al registrar pago");
+          logger.error("Error al registrar pago de {}", m.getDescripcion(), ex);
+        }
+      }
     });
   }
 

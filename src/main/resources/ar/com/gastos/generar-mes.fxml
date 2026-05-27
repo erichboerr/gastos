@@ -5,7 +5,8 @@
 
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="ar.com.gastos.controller.GenerarMesController"
-      spacing="12" alignment="TOP_CENTER" style="-fx-padding:20;">
+      spacing="12" alignment="TOP_CENTER" style="-fx-padding:20;"
+      prefWidth="400">
 
     <Label text="Generar Gastos del Mes"
            style="-fx-font-size:16; -fx-font-weight:bold; -fx-text-fill:#2c3e50;"/>
