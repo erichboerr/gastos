@@ -118,6 +118,19 @@ public class DashboardController {
     }
   }
 
+  @FXML private void abrirComercios() {
+    try {
+      FXMLLoader loader = new FXMLLoader(getClass().getResource("/ar/com/gastos/comercios.fxml"));
+      Scene scene = new Scene(loader.load(), 670, 620);
+      Stage stage = new Stage();
+      stage.setTitle("Comercios");
+      stage.setScene(scene);
+      stage.show();
+    } catch (IOException ex) {
+      logger.error("Error al abrir comercios", ex);
+    }
+  }
+
   @FXML private void abrirNuevaTarjeta() { abrirFormulario("/ar/com/gastos/nueva-tarjeta.fxml", "Nueva Tarjeta"); }
   @FXML
   private void abrirEgreso() {

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="ar.com.gastos.controller.ComercioController"
+      spacing="10" alignment="TOP_CENTER" style="-fx-padding:20;"
+      prefWidth="650">
+
+    <Label text="ABM Comercios"
+           style="-fx-font-size:16; -fx-font-weight:bold; -fx-text-fill:#2c3e50;"/>
+
+    <Separator/>
+
+    <!-- Formulario de alta / edición -->
+    <Label text="Nombre"/>
+    <TextField fx:id="txtNombre" promptText="Nombre del comercio" maxWidth="Infinity"/>
+
+    <Label text="Categoría"/>
+    <ComboBox fx:id="cmbCategoria" promptText="Seleccione o escriba categoría"
+              editable="true" maxWidth="Infinity"/>
+
+    <HBox spacing="8">
+        <Button text="Guardar" onAction="#guardar"
+                style="-fx-background-color:#2c3e50; -fx-text-fill:white; -fx-font-weight:bold;"
+                HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+        <Button text="Limpiar" onAction="#limpiar"
+                HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+    </HBox>
+
+    <Separator/>
+
+    <!-- Lista de comercios -->
+    <Label text="Comercios registrados"/>
+    <TableView fx:id="tablaComercio" prefHeight="300" maxWidth="Infinity">
+        <columns>
+            <TableColumn fx:id="colNombre"    text="Nombre"    prefWidth="220"/>
+            <TableColumn fx:id="colCategoria" text="Categoría" prefWidth="150"/>
+            <TableColumn fx:id="colEstado"    text="Estado"    prefWidth="80"/>
+            <TableColumn fx:id="colAcciones"  text="Acciones"  prefWidth="170"/>
+        </columns>
+    </TableView>
+
+</VBox>

@@ -52,6 +52,7 @@
             <Label text="Carga de datos"
                    style="-fx-text-fill:black; -fx-font-size:16; -fx-font-weight:bold;"/>
             <Button text="Recurrentes" onAction="#abrirRecurrentes" maxWidth="Infinity"/>
+            <Button text="Comercios" onAction="#abrirComercios" maxWidth="Infinity"/>
             <Button text="Generar Mes" onAction="#abrirGenerarMes" maxWidth="Infinity"/>
             <Button text="Cierres"        onAction="#abrirCierreTarjeta" maxWidth="Infinity"/>
             <Separator/>
