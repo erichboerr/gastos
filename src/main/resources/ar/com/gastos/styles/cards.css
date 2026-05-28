@@ -40,3 +40,13 @@
     -fx-background-color: #2980b9;   /* azul más oscuro al pasar el mouse */
     -fx-cursor: hand;
 }
+
+.card-label-key {
+    -fx-font-size: 11px;
+    -fx-text-fill: #7f8c8d;
+}
+
+.card-label-val {
+    -fx-font-size: 12px;
+    -fx-text-fill: #2c3e50;
+}
