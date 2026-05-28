@@ -235,6 +235,11 @@ public class CierreTarjetaController {
     dpVencimiento.setValue(null);
   }
 
+  @FXML
+  private void cerrar() {
+    getStage().close();
+  }
+
   private Stage getStage() {
     return (Stage) cmbTarjeta.getScene().getWindow();
   }

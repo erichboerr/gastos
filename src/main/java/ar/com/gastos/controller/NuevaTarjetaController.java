@@ -145,6 +145,11 @@ public class NuevaTarjetaController {
     cargarTipos();
   }
 
+  @FXML
+  private void cerrar() {
+    getStage().close();
+  }
+
   private Stage getStage() {
     return (Stage) txtNombre.getScene().getWindow();
   }

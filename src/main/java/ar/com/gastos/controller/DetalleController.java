@@ -30,6 +30,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
 
 public class DetalleController {
 
@@ -60,6 +61,9 @@ public class DetalleController {
 
 
   private Tarjeta tarjetaActual;
+
+  // Campo nuevo — referencia al subscriber para poder desuscribir
+  private Consumer<String> subscriber;
 
   // Mes navegable — se inicializa con el mes que pasa el DashboardController
   private YearMonth mesVisible = YearMonth.now();
@@ -96,6 +100,15 @@ public class DetalleController {
       protected void updateItem(LocalDate fecha, boolean empty) {
         super.updateItem(fecha, empty);
         setText(empty || fecha == null ? null : formatter.format(fecha));
+      }
+    });
+
+    // Formato de monto en pesos
+    colMonto.setCellFactory(col -> new TableCell<>() {
+      @Override
+      protected void updateItem(BigDecimal monto, boolean empty) {
+        super.updateItem(monto, empty);
+        setText(empty || monto == null ? null : CURRENCY.format(monto));
       }
     });
 
@@ -146,11 +159,25 @@ public class DetalleController {
       }
     });
 
-    // Recarga cuando el EventBus notifica cambios
-    MovimientoEventBus.subscribe(evento -> {
+//    // Recarga cuando el EventBus notifica cambios
+//    MovimientoEventBus.subscribe(evento -> {
+//      if (tarjetaActual != null) {
+//        Platform.runLater(this::recargarMovimientos);
+//      }
+//    });
+
+    // Guardamos la referencia para poder desuscribir cuando se cierre la ventana
+    subscriber = evento -> {
       if (tarjetaActual != null) {
         Platform.runLater(this::recargarMovimientos);
       }
+    };
+    MovimientoEventBus.subscribe(subscriber);
+
+// Cuando el detalle se cierra, limpiamos el subscriber
+    Platform.runLater(() -> {
+      Stage stage = (Stage) tablaMovimientos.getScene().getWindow();
+      stage.setOnCloseRequest(e -> MovimientoEventBus.unsubscribe(subscriber));
     });
   }
 

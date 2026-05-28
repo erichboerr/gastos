@@ -214,6 +214,7 @@ public class EgresoController {
             cmbDescripcion.setValue(null);
             cargarComercios();
 
+            limpiar();
             Toast.show(getStage(), "Egreso guardado en " + tarjetaNombre + " por $" + monto);
             MovimientoEventBus.publish(tarjetaNombre);
             logger.info("Egreso guardado: {} en {} por ${}", comercio.getNombre(), tarjetaNombre, monto);
@@ -225,6 +226,21 @@ public class EgresoController {
             Toast.show(getStage(), "Monto/cuotas inválido");
             logger.error("Error en formato de monto/cuotas", ex);
         }
+    }
+
+    // --- Limpia el formulario para cargar otro egreso ---
+    private void limpiar() {
+        cmbDescripcion.getEditor().clear();
+        cmbDescripcion.setValue(null);
+        txtMonto.clear();
+        txtCuotas.clear();
+        txtFecha.setValue(null);
+        cargarComercios();
+    }
+
+    @FXML
+    private void cerrar() {
+        getStage().close();
     }
 
     private Stage getStage() {

@@ -223,6 +223,11 @@ public class ComercioController {
     cmbCategoria.setValue(null);
   }
 
+  @FXML
+  private void cerrar() {
+    getStage().close();
+  }
+
   private Stage getStage() {
     return (Stage) txtNombre.getScene().getWindow();
   }

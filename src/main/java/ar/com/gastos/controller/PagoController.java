@@ -21,82 +21,99 @@ import java.util.List;
 
 public class PagoController {
 
-    private static final Logger logger = LoggerFactory.getLogger(PagoController.class);
+  private static final Logger logger = LoggerFactory.getLogger(PagoController.class);
 
-    @FXML private ComboBox<String> cmbTarjeta;
-    @FXML private DatePicker txtFecha;
-    @FXML private TextField txtDescripcion;
-    @FXML private TextField txtMonto;
+  @FXML
+  private ComboBox<String> cmbTarjeta;
+  @FXML
+  private DatePicker txtFecha;
+  @FXML
+  private TextField txtDescripcion;
+  @FXML
+  private TextField txtMonto;
 
-    @FXML
-    public void initialize() {
-        try {
-            TarjetaDao tarjetaDao = new TarjetaDao();
-            List<Tarjeta> tarjetas = tarjetaDao.findAllActivas();
-            cmbTarjeta.getItems().clear();
-            for (Tarjeta t : tarjetas) {
-                cmbTarjeta.getItems().add(t.getNombre());
-            }
-        } catch (Exception e) {
-            logger.error("Error al cargar tarjetas", e);
-        }
+  @FXML
+  public void initialize() {
+    try {
+      TarjetaDao tarjetaDao = new TarjetaDao();
+      List<Tarjeta> tarjetas = tarjetaDao.findAllActivas();
+      cmbTarjeta.getItems().clear();
+      for (Tarjeta t : tarjetas) {
+        cmbTarjeta.getItems().add(t.getNombre());
+      }
+    } catch (Exception e) {
+      logger.error("Error al cargar tarjetas", e);
+    }
+  }
+
+  // --- Limpia el formulario ---
+  private void limpiar() {
+    txtDescripcion.clear();
+    txtMonto.clear();
+    txtFecha.setValue(null);
+  }
+
+  @FXML
+  private void cerrar() {
+    getStage().close();
+  }
+
+  @FXML
+  private void guardarMovimiento() {
+    String tarjetaNombre = cmbTarjeta.getValue();
+    if (tarjetaNombre == null || tarjetaNombre.isEmpty()) {
+      Toast.show(getStage(), "Debe seleccionar una tarjeta");
+      return;
     }
 
-    @FXML
-    private void guardarMovimiento() {
-        String tarjetaNombre = cmbTarjeta.getValue();
-        if (tarjetaNombre == null || tarjetaNombre.isEmpty()) {
-            Toast.show(getStage(), "Debe seleccionar una tarjeta");
-            return;
-        }
+    try {
+      TarjetaDao tarjetaDao = new TarjetaDao();
+      Tarjeta tarjeta = tarjetaDao.findByNombre(tarjetaNombre);
+      if (tarjeta == null) {
+        Toast.show(getStage(), "Tarjeta no encontrada en la base");
+        return;
+      }
 
-        try {
-            TarjetaDao tarjetaDao = new TarjetaDao();
-            Tarjeta tarjeta = tarjetaDao.findByNombre(tarjetaNombre);
-            if (tarjeta == null) {
-                Toast.show(getStage(), "Tarjeta no encontrada en la base");
-                return;
-            }
+      LocalDate fecha = txtFecha.getValue();
+      if (fecha == null) {
+        Toast.show(getStage(), "Debe seleccionar una fecha");
+        return;
+      }
 
-            LocalDate fecha = txtFecha.getValue();
-            if (fecha == null) {
-                Toast.show(getStage(), "Debe seleccionar una fecha");
-                return;
-            }
+      String descripcion = txtDescripcion.getText().trim();
+      if (descripcion.isEmpty()) {
+        Toast.show(getStage(), "Debe ingresar una descripción");
+        return;
+      }
 
-            String descripcion = txtDescripcion.getText().trim();
-            if (descripcion.isEmpty()) {
-                Toast.show(getStage(), "Debe ingresar una descripción");
-                return;
-            }
+      BigDecimal monto = new BigDecimal(txtMonto.getText()).setScale(2);
 
-            BigDecimal monto = new BigDecimal(txtMonto.getText()).setScale(2);
+      // Constructor de PAGO — sin comercio_id, con descripción libre
+      Movimiento movimiento = new Movimiento(
+          tarjeta.getId(),
+          fecha,
+          descripcion,
+          monto,
+          "ARS"
+      );
 
-            // Constructor de PAGO — sin comercio_id, con descripción libre
-            Movimiento movimiento = new Movimiento(
-                tarjeta.getId(),
-                fecha,
-                descripcion,
-                monto,
-                "ARS"
-            );
+      new MovimientoDao().save(movimiento);
 
-            new MovimientoDao().save(movimiento);
+      Toast.show(getStage(), "Pago guardado en " + tarjetaNombre + " por $" + monto);
+      MovimientoEventBus.publish(tarjetaNombre);
+      logger.info("Pago guardado en tarjeta {} por {}", tarjetaNombre, monto);
+      limpiar();
 
-            Toast.show(getStage(), "Pago guardado en " + tarjetaNombre + " por $" + monto);
-            MovimientoEventBus.publish(tarjetaNombre);
-            logger.info("Pago guardado en tarjeta {} por {}", tarjetaNombre, monto);
-
-        } catch (SQLException ex) {
-            Toast.show(getStage(), "Error al guardar pago");
-            logger.error("Error al guardar pago", ex);
-        } catch (NumberFormatException ex) {
-            Toast.show(getStage(), "Monto inválido");
-            logger.error("Error en formato de monto", ex);
-        }
+    } catch (SQLException ex) {
+      Toast.show(getStage(), "Error al guardar pago");
+      logger.error("Error al guardar pago", ex);
+    } catch (NumberFormatException ex) {
+      Toast.show(getStage(), "Monto inválido");
+      logger.error("Error en formato de monto", ex);
     }
+  }
 
-    private Stage getStage() {
-        return (Stage) cmbTarjeta.getScene().getWindow();
-    }
+  private Stage getStage() {
+    return (Stage) cmbTarjeta.getScene().getWindow();
+  }
 }

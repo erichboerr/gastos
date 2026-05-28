@@ -171,6 +171,20 @@ public class MovimientoDao {
     return lista;
   }
 
+  /** Verifica si ya existen movimientos con descripción libre para una tarjeta en una fecha dada */
+  public boolean existeRecurrenteEnMes(int tarjetaId, LocalDate fecha) throws SQLException {
+    String sql = "SELECT COUNT(*) FROM movimiento " +
+        "WHERE tarjeta_id = ? AND fecha = ? AND categoria = 'EGRESO' AND comercio_id IS NULL";
+    try (Connection c = Db.getDataSource().getConnection();
+         PreparedStatement ps = c.prepareStatement(sql)) {
+      ps.setInt(1, tarjetaId);
+      ps.setDate(2, Date.valueOf(fecha));
+      ResultSet rs = ps.executeQuery();
+      if (rs.next()) return rs.getInt(1) > 0;
+    }
+    return false;
+  }
+
   // --- Eliminación con cuotas en transacción ---
 
   /**

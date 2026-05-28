@@ -10,11 +10,7 @@ import ar.com.gastos.model.Tarjeta;
 import ar.com.gastos.util.MovimientoEventBus;
 import ar.com.gastos.util.Toast;
 import javafx.fxml.FXML;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.DatePicker;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
@@ -25,6 +21,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class GenerarMesController {
 
@@ -127,6 +124,26 @@ public class GenerarMesController {
       Toast.show(getStage(), "Error al buscar tarjeta débito");
       logger.error("Error al buscar tarjeta DEBITO", ex);
       return;
+    }
+
+    // Verificamos si ya se generaron recurrentes para este mes
+    try {
+      MovimientoDao checkDao = new MovimientoDao();
+      if (checkDao.existeRecurrenteEnMes(tarjetaDebito.getId(), fechaMes)) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Atención");
+        alert.setHeaderText("Ya se generaron recurrentes para este mes");
+        alert.setContentText("¿Querés generarlos de todas formas? Esto puede duplicar egresos.");
+
+        ButtonType btnSi  = new ButtonType("Sí, generar igual");
+        ButtonType btnNo  = new ButtonType("Cancelar", ButtonBar.ButtonData.CANCEL_CLOSE);
+        alert.getButtonTypes().setAll(btnSi, btnNo);
+
+        Optional<ButtonType> respuesta = alert.showAndWait();
+        if (respuesta.isEmpty() || respuesta.get() == btnNo) return;
+      }
+    } catch (SQLException ex) {
+      logger.error("Error al verificar recurrentes existentes", ex);
     }
 
     // Procesamos solo los items seleccionados con monto válido

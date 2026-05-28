@@ -42,4 +42,6 @@
         </columns>
     </TableView>
 
+    <Button text="Cerrar" onAction="#cerrar" maxWidth="Infinity"/>
+
 </VBox>

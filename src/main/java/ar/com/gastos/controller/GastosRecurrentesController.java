@@ -173,6 +173,11 @@ public class GastosRecurrentesController {
     cmbMedioPago.setValue("DEBITO");
   }
 
+  @FXML
+  private void cerrar() {
+    getStage().close();
+  }
+
   private Stage getStage() {
     return (Stage) txtDescripcion.getScene().getWindow();
   }

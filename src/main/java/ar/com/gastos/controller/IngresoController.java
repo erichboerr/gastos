@@ -203,6 +203,11 @@ public class IngresoController {
     txtMonto.clear();
   }
 
+  @FXML
+  private void cerrar() {
+    getStage().close();
+  }
+
   private Stage getStage() {
     return (Stage) txtMonto.getScene().getWindow();
   }
