@@ -61,8 +61,12 @@
             <Button text="Resumen Anual"  onAction="#abrirResumenAnual"  maxWidth="Infinity"/>
 
             <Separator/>
+            <Label text="Backups Base de Datos"
+                   style="-fx-text-fill:black; -fx-font-size:16; -fx-font-weight:bold;"/>
             <Button text="Backup DB" onAction="#ejecutarBackup" maxWidth="Infinity"
                     style="-fx-background-color:#8e44ad; -fx-text-fill:white; -fx-font-weight:bold;"/>
+            <Button text="Restaurar Backup" onAction="#abrirRestaurarBackup" maxWidth="Infinity"
+                    style="-fx-background-color:#922b21; -fx-text-fill:white; -fx-font-weight:bold;"/>
 
         </VBox>
     </left>

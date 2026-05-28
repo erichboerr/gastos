@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="ar.com.gastos.controller.RestaurarBackupController"
+      spacing="12" alignment="TOP_CENTER" style="-fx-padding:20;"
+      prefWidth="420">
+
+    <Label text="Restaurar Backup"
+           style="-fx-font-size:16; -fx-font-weight:bold; -fx-text-fill:#2c3e50;"/>
+
+    <Label text="⚠ Esta acción reemplazará TODOS los datos actuales"
+           style="-fx-font-size:12; -fx-text-fill:#e74c3c; -fx-font-weight:bold;"/>
+
+    <Separator/>
+
+    <Label text="Seleccioná el backup a restaurar:"/>
+    <ListView fx:id="lstBackups" prefHeight="200"/>
+
+    <Separator/>
+
+    <HBox spacing="8">
+        <Button fx:id="btnRestaurar" text="Restaurar" onAction="#restaurar"
+                style="-fx-background-color:#e74c3c; -fx-text-fill:white; -fx-font-weight:bold;"
+                HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+        <Button text="Cerrar" onAction="#cerrar"
+                HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+    </HBox>
+
+</VBox>

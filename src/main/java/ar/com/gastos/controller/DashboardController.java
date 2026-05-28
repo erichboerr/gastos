@@ -433,4 +433,19 @@ public class DashboardController {
       logger.error("Error al ejecutar backup", ex);
     }
   }
+
+  @FXML
+  private void abrirRestaurarBackup() {
+    try {
+      FXMLLoader loader = new FXMLLoader(
+          getClass().getResource("/ar/com/gastos/restaurar-backup.fxml"));
+      Scene scene = new Scene(loader.load());
+      Stage stage = new Stage();
+      stage.setTitle("Restaurar Backup");
+      stage.setScene(scene);
+      stage.show();
+    } catch (IOException ex) {
+      logger.error("Error al abrir restaurar backup", ex);
+    }
+  }
 }
