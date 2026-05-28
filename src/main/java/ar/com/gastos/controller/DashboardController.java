@@ -2,8 +2,10 @@ package ar.com.gastos.controller;
 
 import ar.com.gastos.dao.*;
 import ar.com.gastos.model.*;
+import ar.com.gastos.util.BackupService;
 import ar.com.gastos.util.MovimientoEventBus;
 
+import ar.com.gastos.util.Toast;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -417,5 +419,18 @@ public class DashboardController {
       }
     });
     return btn;
+  }
+  @FXML
+  private void ejecutarBackup() {
+    try {
+      String path = BackupService.ejecutarBackup();
+      Toast.show((Stage) lblBalance.getScene().getWindow(),
+          "Backup guardado: " + path);
+      logger.info("Backup ejecutado correctamente: {}", path);
+    } catch (Exception ex) {
+      Toast.show((Stage) lblBalance.getScene().getWindow(),
+          "Error al ejecutar backup: " + ex.getMessage());
+      logger.error("Error al ejecutar backup", ex);
+    }
   }
 }

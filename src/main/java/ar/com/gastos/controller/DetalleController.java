@@ -7,6 +7,7 @@ import ar.com.gastos.model.CierreTarjeta;
 import ar.com.gastos.model.Cuota;
 import ar.com.gastos.model.Movimiento;
 import ar.com.gastos.model.Tarjeta;
+import ar.com.gastos.util.BackupService;
 import ar.com.gastos.util.MovimientoEventBus;
 import ar.com.gastos.util.Toast;
 import javafx.application.Platform;
@@ -58,7 +59,6 @@ public class DetalleController {
   private TableColumn<Movimiento, String> colCuota;
   @FXML
   private TableColumn<Movimiento, Void> colAcciones;
-
 
   private Tarjeta tarjetaActual;
 
@@ -159,13 +159,6 @@ public class DetalleController {
       }
     });
 
-//    // Recarga cuando el EventBus notifica cambios
-//    MovimientoEventBus.subscribe(evento -> {
-//      if (tarjetaActual != null) {
-//        Platform.runLater(this::recargarMovimientos);
-//      }
-//    });
-
     // Guardamos la referencia para poder desuscribir cuando se cierre la ventana
     subscriber = evento -> {
       if (tarjetaActual != null) {
@@ -200,7 +193,7 @@ public class DetalleController {
   private void recargarMovimientos() {
     if (tarjetaActual == null) return;
 
-    // Actualizamos el label del mes — ej: "Mayo 2026"
+    // Actualizamos el label del mes — ej.: "Mayo 2026"
     String nombreMes = mesVisible.getMonth()
         .getDisplayName(TextStyle.FULL, new Locale("es"));
     nombreMes = nombreMes.substring(0, 1).toUpperCase() + nombreMes.substring(1);
@@ -381,4 +374,6 @@ public class DetalleController {
       logger.error("Error al eliminar movimiento id {}", m.getId(), ex);
     }
   }
+
+
 }
