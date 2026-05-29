@@ -128,4 +128,26 @@ public class CierreTarjetaDao {
       ps.executeUpdate();
     }
   }
+
+  /**
+   * Retorna el cierre cuya fecha_vencimiento cae en el mes dado.
+   * Usado por el dashboard para mostrar en el mes X lo que se abona en X.
+   */
+  public CierreTarjeta findCierrePorVencimiento(int tarjetaId, YearMonth mes) throws SQLException {
+    // Buscamos cierres cuya fecha_vencimiento esté dentro del mes dado
+    String sql = "SELECT * FROM cierres_tarjeta " +
+        "WHERE id = ? " +
+        "AND EXTRACT(YEAR FROM fecha_vencimiento) = ? " +
+        "AND EXTRACT(MONTH FROM fecha_vencimiento) = ? " +
+        "LIMIT 1";
+    try (Connection conn = Db.getDataSource().getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, tarjetaId);
+      ps.setInt(2, mes.getYear());
+      ps.setInt(3, mes.getMonthValue());
+      ResultSet rs = ps.executeQuery();
+      if (rs.next()) return mapRow(rs);
+    }
+    return null;
+  }
 }

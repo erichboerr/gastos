@@ -205,7 +205,7 @@ public class DetalleController {
       CierreTarjetaDao cierreDao = new CierreTarjetaDao();
 
       // Buscamos el cierre del mes visible para esta tarjeta
-      CierreTarjeta cierreMes = cierreDao.findCierrePorMes(tarjetaActual.getId(), mesVisible);
+      CierreTarjeta cierreMes = cierreDao.findCierrePorVencimiento(tarjetaActual.getId(), mesVisible);
 
       List<Movimiento> movimientos;
       LocalDate desde = mesVisible.atDay(1);
@@ -238,11 +238,10 @@ public class DetalleController {
             m.setCuotaTexto("Pago único");
             totalConsumos = totalConsumos.add(m.getMonto());
           } else {
-            // Sumamos solo la cuota que vence en el período
+            // ✅ Filtramos por mes y año de vencimiento de la cuota
             List<Cuota> cuotas = cuotaDao.findByMovimiento(m.getId());
             for (Cuota c : cuotas) {
-              if (!c.getFechaVencimiento().isBefore(desde) &&
-                  !c.getFechaVencimiento().isAfter(hasta)) {
+              if (YearMonth.from(c.getFechaVencimiento()).equals(mesVisible)) {
                 m.setMonto(c.getMonto());
                 m.setCuotaTexto(c.getNroCuota() + " de " + m.getCuotas());
                 totalConsumos = totalConsumos.add(c.getMonto());
