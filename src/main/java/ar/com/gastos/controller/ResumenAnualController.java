@@ -81,7 +81,7 @@ public class ResumenAnualController {
 
         double egrMes = 0;
         for (Tarjeta t : tarjetas) {
-          CierreTarjeta cierreMes = cierreDao.findCierrePorMes(t.getId(), ym);
+          CierreTarjeta cierreMes = cierreDao.findCierrePorMesDeCierre(t.getId(), ym);
           if (cierreMes != null) {
             CierreTarjeta anterior = cierreDao.findAnteriorPorTarjeta(
                 t.getId(), cierreMes.getFechaCierre());
@@ -100,14 +100,17 @@ public class ResumenAnualController {
                   // Pago único — suma el monto directamente
                   egrMes += m.getMonto().doubleValue();
                 } else {
-                  // En cuotas — sumamos solo la cuota que vence en el período
-                  List<ar.com.gastos.model.Cuota> cuotas =
-                      cuotaDao.findByMovimiento(m.getId());
-                  for (ar.com.gastos.model.Cuota c : cuotas) {
-                    if (!c.getFechaVencimiento().isBefore(desde) &&
-                        !c.getFechaVencimiento().isAfter(hasta)) {
-                      egrMes += c.getMonto().doubleValue();
-                      break;
+                  // Calculamos qué número de cuota corresponde a este período
+                  int nroCuota = cierreDao.calcularNroCuota(
+                        t.getId(), m.getFecha(), desde, hasta);
+
+                  if (nroCuota >= 1 && nroCuota <= m.getCuotas()) {
+                    List<Cuota> cuotas = cuotaDao.findByMovimiento(m.getId());
+                    for (Cuota c : cuotas) {
+                      if (c.getNroCuota() == nroCuota) {
+                        egrMes += c.getMonto().doubleValue();
+                        break;
+                      }
                     }
                   }
                 }

@@ -171,7 +171,7 @@ public class DashboardController {
       double totalPagos   = 0;
 
       for (Tarjeta t : tarjetas) {
-        CierreTarjeta cierreMes = cierreDao.findCierrePorVencimiento(t.getId(), mesVisible);
+        CierreTarjeta cierreMes = cierreDao.findCierrePorMesDeCierre(t.getId(), mesVisible);
 
         if (cierreMes != null) {
           CierreTarjeta cierreAnterior = cierreDao.findAnteriorPorTarjeta(
@@ -181,6 +181,8 @@ public class DashboardController {
               ? cierreAnterior.getFechaCierre().plusDays(1)
               : cierreMes.getMes();
           LocalDate hasta = cierreMes.getFechaCierre();
+          System.out.println("Cierre anterior: "+cierreAnterior);
+          System.out.println("Cierre de mes: "+cierreMes);
 
           logger.debug("Tarjeta [{}] — período desde: {} hasta: {}", t.getNombre(), desde, hasta);
 
@@ -195,13 +197,18 @@ public class DashboardController {
                 totalPeriodo = totalPeriodo.add(m.getMonto());
                 totalEgresos += m.getMonto().doubleValue();
               } else {
-                // ✅ Filtramos por mes y año de vencimiento, no por rango exacto
-                List<Cuota> cuotas = cuotaDao.findByMovimiento(m.getId());
-                for (Cuota c : cuotas) {
-                  if (YearMonth.from(c.getFechaVencimiento()).equals(mesVisible)) {
-                    totalPeriodo = totalPeriodo.add(c.getMonto());
-                    totalEgresos += c.getMonto().doubleValue();
-                    break;
+                // Calculamos qué número de cuota corresponde a este período
+                int nroCuota = cierreDao.calcularNroCuota(
+                      t.getId(), m.getFecha(), desde, hasta);
+
+                if (nroCuota >= 1 && nroCuota <= m.getCuotas()) {
+                  List<Cuota> cuotas = cuotaDao.findByMovimiento(m.getId());
+                  for (Cuota c : cuotas) {
+                    if (c.getNroCuota() == nroCuota) {
+                      totalPeriodo = totalPeriodo.add(c.getMonto());
+                      totalEgresos += c.getMonto().doubleValue();
+                      break;
+                    }
                   }
                 }
               }

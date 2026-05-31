@@ -58,13 +58,11 @@ CREATE TABLE IF NOT EXISTS cuota (
     id SERIAL PRIMARY KEY,
     movimiento_id INTEGER NOT NULL REFERENCES movimiento(id),
     nro_cuota INTEGER NOT NULL,
-    fecha_vencimiento DATE NOT NULL,
     monto NUMERIC(12, 2) NOT NULL,
     estado VARCHAR(20) NOT NULL DEFAULT 'pendiente'
 );
 
 CREATE INDEX IF NOT EXISTS idx_cuota_movimiento ON cuota(movimiento_id);
-CREATE INDEX IF NOT EXISTS idx_cuota_vencimiento ON cuota(fecha_vencimiento);
 
 -- -------------------------------------------------------------
 -- INGRESO

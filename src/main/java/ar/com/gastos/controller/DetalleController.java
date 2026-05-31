@@ -29,6 +29,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
@@ -205,7 +206,7 @@ public class DetalleController {
       CierreTarjetaDao cierreDao = new CierreTarjetaDao();
 
       // Buscamos el cierre del mes visible para esta tarjeta
-      CierreTarjeta cierreMes = cierreDao.findCierrePorVencimiento(tarjetaActual.getId(), mesVisible);
+      CierreTarjeta cierreMes = cierreDao.findCierrePorMesDeCierre(tarjetaActual.getId(), mesVisible);
 
       List<Movimiento> movimientos;
       LocalDate desde = mesVisible.atDay(1);
@@ -228,29 +229,41 @@ public class DetalleController {
       BigDecimal totalConsumos = BigDecimal.ZERO;
       BigDecimal totalPagos = BigDecimal.ZERO;
 
+      List<Movimiento> movimientosFiltrados = new ArrayList<>();
+
       for (Movimiento m : movimientos) {
         if ("PAGO".equals(m.getCategoria())) {
           m.setCuotaTexto("Pago");
           totalPagos = totalPagos.add(m.getMonto());
+          movimientosFiltrados.add(m);
 
         } else if ("EGRESO".equals(m.getCategoria())) {
           if (m.getCuotas() == 1) {
             m.setCuotaTexto("Pago único");
             totalConsumos = totalConsumos.add(m.getMonto());
+            movimientosFiltrados.add(m);
           } else {
-            // ✅ Filtramos por mes y año de vencimiento de la cuota
-            List<Cuota> cuotas = cuotaDao.findByMovimiento(m.getId());
-            for (Cuota c : cuotas) {
-              if (YearMonth.from(c.getFechaVencimiento()).equals(mesVisible)) {
-                m.setMonto(c.getMonto());
-                m.setCuotaTexto(c.getNroCuota() + " de " + m.getCuotas());
-                totalConsumos = totalConsumos.add(c.getMonto());
-                break;
+            int nroCuota = cierreDao.calcularNroCuota(
+                  tarjetaActual.getId(), m.getFecha(), desde, hasta);
+
+            if (nroCuota >= 1 && nroCuota <= m.getCuotas()) {
+              List<Cuota> cuotas = cuotaDao.findByMovimiento(m.getId());
+              for (Cuota c : cuotas) {
+                if (c.getNroCuota() == nroCuota) {
+                  m.setMonto(c.getMonto());
+                  m.setCuotaTexto(nroCuota + " de " + m.getCuotas());
+                  totalConsumos = totalConsumos.add(c.getMonto());
+                  movimientosFiltrados.add(m); // ← SOLO acá se agrega
+                  break;
+                }
               }
             }
+            // ← Si nroCuota es -1 o > cuotas, NO se agrega a movimientosFiltrados
           }
         }
       }
+
+      tablaMovimientos.setItems(FXCollections.observableArrayList(movimientosFiltrados));
 
       BigDecimal saldo = totalConsumos.subtract(totalPagos);
 
@@ -263,8 +276,6 @@ public class DetalleController {
           ? "-fx-font-size:12; -fx-font-weight:bold; -fx-text-fill:#c0392b;"
           : "-fx-font-size:12; -fx-font-weight:bold; -fx-text-fill:#27ae60;");
 
-// Ya no usamos lblTotalMes — podés eliminarlo del FXML y del controller
-      tablaMovimientos.setItems(FXCollections.observableArrayList(movimientos));
 
     } catch (Exception ex) {
       logger.error("Error al recargar movimientos de tarjeta {}",
@@ -373,6 +384,4 @@ public class DetalleController {
       logger.error("Error al eliminar movimiento id {}", m.getId(), ex);
     }
   }
-
-
 }

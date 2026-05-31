@@ -94,7 +94,7 @@ public class MovimientoDao {
         LocalDate fechaCuota = (i == 1)
             ? fechaBase
             // ✅ Ahora — día 1 del mes correspondiente
-            : fechaBase.plusMonths(i - 1).withDayOfMonth(1).plusMonths(1);
+            : fechaBase.plusMonths(i - 1).withDayOfMonth(1);
 
         ps.setInt(1, movimientoId);
         ps.setInt(2, i);
@@ -141,18 +141,14 @@ public class MovimientoDao {
   public List<Movimiento> findByTarjetaEnRangoPeriodo(int tarjetaId, LocalDate desde, LocalDate hasta)
       throws SQLException {
     String sql =
-        "SELECT DISTINCT m.*, COALESCE(co.nombre, m.descripcion) AS label " +
-            "FROM movimiento m " +
-            "LEFT JOIN comercio co ON co.id = m.comercio_id " +
-            "WHERE m.tarjeta_id = ? AND (" +
-            "  (m.cuotas = 1 AND m.fecha BETWEEN ? AND ?) " +
-            "  OR " +
-            "  (m.cuotas > 1 AND EXISTS (" +
-            "    SELECT 1 FROM cuota cu " +
-            "    WHERE cu.movimiento_id = m.id " +
-            "    AND cu.fecha_vencimiento BETWEEN ? AND ?" +
-            "  ))" +
-            ") ORDER BY m.fecha ASC";
+          "SELECT DISTINCT m.*, COALESCE(co.nombre, m.descripcion) AS label " +
+                "FROM movimiento m " +
+                "LEFT JOIN comercio co ON co.id = m.comercio_id " +
+                "WHERE m.tarjeta_id = ? AND (" +
+                "  (m.cuotas = 1 AND m.fecha BETWEEN ? AND ?) " +
+                "  OR " +
+                "  (m.cuotas > 1 AND m.fecha <= ?)" + // compradas antes o durante el período
+                ") ORDER BY m.fecha ASC";
 
     List<Movimiento> lista = new ArrayList<>();
     try (Connection c = Db.getDataSource().getConnection();
@@ -160,8 +156,7 @@ public class MovimientoDao {
       ps.setInt(1, tarjetaId);
       ps.setDate(2, Date.valueOf(desde));
       ps.setDate(3, Date.valueOf(hasta));
-      ps.setDate(4, Date.valueOf(desde));
-      ps.setDate(5, Date.valueOf(hasta));
+      ps.setDate(4, Date.valueOf(hasta)); // ← para cuotas > 1
       ResultSet rs = ps.executeQuery();
       while (rs.next()) {
         Movimiento mov = mapRow(rs);
