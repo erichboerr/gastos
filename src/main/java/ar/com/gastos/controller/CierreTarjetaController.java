@@ -24,15 +24,24 @@ public class CierreTarjetaController {
 
   private static final Logger logger = LoggerFactory.getLogger(CierreTarjetaController.class);
 
-  @FXML private ComboBox<String> cmbTarjeta;
-  @FXML private DatePicker dpMes;
-  @FXML private DatePicker dpCierre;
-  @FXML private DatePicker dpVencimiento;
-  @FXML private TableView<CierreTarjeta> tablaCierres;
-  @FXML private TableColumn<CierreTarjeta, LocalDate> colMes;
-  @FXML private TableColumn<CierreTarjeta, LocalDate> colFechaCierre;
-  @FXML private TableColumn<CierreTarjeta, LocalDate> colFechaVenc;
-  @FXML private TableColumn<CierreTarjeta, Void>      colAcciones;
+  @FXML
+  private ComboBox<String> cmbTarjeta;
+  @FXML
+  private DatePicker dpMes;
+  @FXML
+  private DatePicker dpCierre;
+  @FXML
+  private DatePicker dpVencimiento;
+  @FXML
+  private TableView<CierreTarjeta> tablaCierres;
+  @FXML
+  private TableColumn<CierreTarjeta, LocalDate> colMes;
+  @FXML
+  private TableColumn<CierreTarjeta, LocalDate> colFechaCierre;
+  @FXML
+  private TableColumn<CierreTarjeta, LocalDate> colFechaVenc;
+  @FXML
+  private TableColumn<CierreTarjeta, Void> colAcciones;
 
   // Cuando editamos un cierre existente guardamos su idCierre. -1 = modo alta.
   private int idEditando = -1;
@@ -86,19 +95,22 @@ public class CierreTarjetaController {
     // Formato de fecha dd/MM/yyyy para las tres columnas de fecha
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     colMes.setCellFactory(col -> new TableCell<>() {
-      @Override protected void updateItem(LocalDate v, boolean empty) {
+      @Override
+      protected void updateItem(LocalDate v, boolean empty) {
         super.updateItem(v, empty);
         setText(empty || v == null ? null : formatter.format(v));
       }
     });
     colFechaCierre.setCellFactory(col -> new TableCell<>() {
-      @Override protected void updateItem(LocalDate v, boolean empty) {
+      @Override
+      protected void updateItem(LocalDate v, boolean empty) {
         super.updateItem(v, empty);
         setText(empty || v == null ? null : formatter.format(v));
       }
     });
     colFechaVenc.setCellFactory(col -> new TableCell<>() {
-      @Override protected void updateItem(LocalDate v, boolean empty) {
+      @Override
+      protected void updateItem(LocalDate v, boolean empty) {
         super.updateItem(v, empty);
         setText(empty || v == null ? null : formatter.format(v));
       }
@@ -106,9 +118,9 @@ public class CierreTarjetaController {
 
     // Columna de acciones: Editar + Eliminar por fila
     colAcciones.setCellFactory(col -> new TableCell<>() {
-      private final Button btnEditar   = new Button("Editar");
+      private final Button btnEditar = new Button("Editar");
       private final Button btnEliminar = new Button("Eliminar");
-      private final HBox   hbox        = new HBox(6, btnEditar, btnEliminar);
+      private final HBox hbox = new HBox(6, btnEditar, btnEliminar);
 
       {
         btnEditar.setStyle("-fx-background-color:#2c3e50; -fx-text-fill:white; -fx-font-size:11;");
@@ -151,12 +163,36 @@ public class CierreTarjetaController {
   @FXML
   private void guardarCierre() {
     String tarjetaNombre = cmbTarjeta.getValue();
-    LocalDate mes        = dpMes.getValue();
-    LocalDate cierre     = dpCierre.getValue();
+    LocalDate mes = dpMes.getValue();
+    LocalDate cierre = dpCierre.getValue();
     LocalDate vencimiento = dpVencimiento.getValue();
 
     if (tarjetaNombre == null || mes == null || cierre == null || vencimiento == null) {
       Toast.show(getStage(), "Debe completar todos los campos");
+      return;
+    }
+
+    if (tarjetaNombre == null || mes == null || cierre == null || vencimiento == null) {
+      Toast.show(getStage(), "Debe completar todos los campos");
+      return;
+    }
+
+// Validación: el cierre no puede ser anterior al mes seleccionado
+    if (cierre.isBefore(mes)) {
+      Toast.show(getStage(), "La fecha de cierre no puede ser anterior al mes seleccionado");
+      return;
+    }
+
+// Validación: el vencimiento debe ser posterior al cierre
+    if (!vencimiento.isAfter(cierre)) {
+      Toast.show(getStage(), "La fecha de vencimiento debe ser posterior a la fecha de cierre");
+      return;
+    }
+
+// Validación: el vencimiento debe ser del mes siguiente al cierre
+    if (vencimiento.getMonthValue() == cierre.getMonthValue()
+        && vencimiento.getYear() == cierre.getYear()) {
+      Toast.show(getStage(), "La fecha de vencimiento debe ser del mes siguiente al cierre");
       return;
     }
 

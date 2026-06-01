@@ -43,7 +43,7 @@ public class GastoRecurrenteDao {
     try (Connection conn = Db.getDataSource().getConnection();
          PreparedStatement ps = conn.prepareStatement(sql)) {
       ps.setString(1, g.getDescripcion().toUpperCase().trim());
-      ps.setString(2, g.getCategoria());
+      ps.setString(2, g.getCategoria().toUpperCase().trim());
       ps.setString(3, g.getMedioPago());
       ps.executeUpdate();
     }
@@ -56,8 +56,8 @@ public class GastoRecurrenteDao {
     String sql = "UPDATE gastos_recurrentes SET descripcion=?, categoria=?, medio_pago=? WHERE id=?";
     try (Connection conn = Db.getDataSource().getConnection();
          PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setString(1, g.getDescripcion());
-      ps.setString(2, g.getCategoria());
+      ps.setString(1, g.getDescripcion().toUpperCase().trim());
+      ps.setString(2, g.getCategoria().toUpperCase().trim());
       ps.setString(3, g.getMedioPago());
       ps.setInt(4, g.getId());
       ps.executeUpdate();

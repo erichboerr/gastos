@@ -15,7 +15,7 @@ public class IngresoDao {
     try (Connection conn = Db.getDataSource().getConnection();
          PreparedStatement ps = conn.prepareStatement(sql)) {
       ps.setDate(1, Date.valueOf(fecha));
-      ps.setString(2, tipo);
+      ps.setString(2, tipo.toUpperCase().trim());
       ps.setBigDecimal(3, monto.setScale(2));
       ps.setString(4, "ARS");
       ps.executeUpdate();
@@ -48,7 +48,7 @@ public class IngresoDao {
     try (Connection conn = Db.getDataSource().getConnection();
          PreparedStatement ps = conn.prepareStatement(sql)) {
       ps.setDate(1, Date.valueOf(i.getFecha()));
-      ps.setString(2, i.getTipo());
+      ps.setString(2, i.getTipo().toUpperCase().trim());
       ps.setBigDecimal(3, i.getMonto().setScale(2));
       ps.setInt(4, i.getId());
       ps.executeUpdate();
