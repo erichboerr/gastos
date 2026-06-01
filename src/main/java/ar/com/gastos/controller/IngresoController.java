@@ -17,44 +17,67 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.text.NumberFormat;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 public class IngresoController {
 
   private static final Logger logger = LoggerFactory.getLogger(IngresoController.class);
 
-  @FXML private ComboBox<String> cmbTipoIngreso;
-  @FXML private DatePicker dpFecha;
-  @FXML private TextField txtMonto;
-  @FXML private TableView<Ingreso> tablaIngresos;
-  @FXML private TableColumn<Ingreso, LocalDate> colFecha;
-  @FXML private TableColumn<Ingreso, String>    colTipo;
-  @FXML private TableColumn<Ingreso, BigDecimal> colMonto;
-  @FXML private TableColumn<Ingreso, Void>      colAcciones;
+  @FXML private ComboBox<String>  cmbTipoIngreso;
+  @FXML private DatePicker        dpFecha;
+  @FXML private TextField         txtMonto;
+  @FXML private Label             lblMes;
+  @FXML private Label             lblTotalMes;
+  @FXML private TableView<Ingreso>          tablaIngresos;
+  @FXML private TableColumn<Ingreso, LocalDate>   colFecha;
+  @FXML private TableColumn<Ingreso, String>      colTipo;
+  @FXML private TableColumn<Ingreso, BigDecimal>  colMonto;
+  @FXML private TableColumn<Ingreso, Void>        colAcciones;
 
-  // Cuando editamos un ingreso existente guardamos su id. -1 = modo alta.
+  // Mes navegable
+  private YearMonth mesVisible = YearMonth.now();
+
+  // -1 = modo alta
   private int idEditando = -1;
+
+  private static final NumberFormat CURRENCY =
+      NumberFormat.getCurrencyInstance(new Locale("es", "AR"));
+  static { CURRENCY.setMaximumFractionDigits(2); }
 
   @FXML
   public void initialize() {
-    // Tipos de ingreso predefinidos — editables por el usuario
     cmbTipoIngreso.getItems().addAll("Sueldo Erich", "Sueldo Lorena", "Lucía", "Frasco");
     dpFecha.setValue(LocalDate.now());
-
     configurarTabla();
     cargarTabla();
   }
 
-  // --- Configuración de columnas de la tabla ---
+  // --- Navegación por mes ---
+
+  @FXML
+  private void meAnterior() {
+    mesVisible = mesVisible.minusMonths(1);
+    cargarTabla();
+  }
+
+  @FXML
+  private void meSiguiente() {
+    mesVisible = mesVisible.plusMonths(1);
+    cargarTabla();
+  }
+
+  // --- Configuración de columnas ---
 
   private void configurarTabla() {
     colTipo.setCellValueFactory(new PropertyValueFactory<>("tipo"));
     colMonto.setCellValueFactory(new PropertyValueFactory<>("monto"));
     colFecha.setCellValueFactory(new PropertyValueFactory<>("fecha"));
 
-    // Formato de fecha dd/MM/yyyy
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     colFecha.setCellFactory(col -> new TableCell<>() {
       @Override
@@ -64,18 +87,14 @@ public class IngresoController {
       }
     });
 
-    // Formato de monto en pesos
-    NumberFormat currency = NumberFormat.getCurrencyInstance(new Locale("es", "AR"));
-    currency.setMaximumFractionDigits(2);
     colMonto.setCellFactory(col -> new TableCell<>() {
       @Override
       protected void updateItem(BigDecimal monto, boolean empty) {
         super.updateItem(monto, empty);
-        setText(empty || monto == null ? null : currency.format(monto));
+        setText(empty || monto == null ? null : CURRENCY.format(monto));
       }
     });
 
-    // Columna de acciones: Editar + Eliminar por fila
     colAcciones.setCellFactory(col -> new TableCell<>() {
       private final Button btnEditar   = new Button("Editar");
       private final Button btnEliminar = new Button("Eliminar");
@@ -104,13 +123,32 @@ public class IngresoController {
     });
   }
 
-  // --- Carga la tabla desde la DB ---
+  // --- Carga la tabla filtrada por mes visible ---
 
   private void cargarTabla() {
+    // Actualizamos el label del mes
+    String nombreMes = mesVisible.getMonth()
+        .getDisplayName(TextStyle.FULL, new Locale("es"));
+    nombreMes = nombreMes.substring(0, 1).toUpperCase() + nombreMes.substring(1);
+    lblMes.setText(nombreMes + " " + mesVisible.getYear());
+
     try {
       IngresoDao dao = new IngresoDao();
-      List<Ingreso> ingresos = dao.listarIngresos();
-      tablaIngresos.setItems(FXCollections.observableArrayList(ingresos));
+      List<Ingreso> todos = dao.listarIngresos();
+
+      // Filtramos por mes visible
+      List<Ingreso> delMes = todos.stream()
+          .filter(i -> YearMonth.from(i.getFecha()).equals(mesVisible))
+          .collect(Collectors.toList());
+
+      // Total del mes
+      BigDecimal total = delMes.stream()
+          .map(Ingreso::getMonto)
+          .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+      lblTotalMes.setText("Total: " + CURRENCY.format(total));
+      tablaIngresos.setItems(FXCollections.observableArrayList(delMes));
+
     } catch (SQLException ex) {
       logger.error("Error al cargar ingresos", ex);
     }
@@ -134,12 +172,10 @@ public class IngresoController {
       IngresoDao dao = new IngresoDao();
 
       if (idEditando == -1) {
-        // Modo alta
         dao.insertarIngreso(tipo, monto, fecha);
         logger.info("Ingreso registrado: {} - ${} - {}", tipo, monto, fecha);
         Toast.show(getStage(), "Ingreso registrado");
       } else {
-        // Modo edición
         Ingreso editado = new Ingreso(idEditando, fecha, tipo, monto, "ARS");
         dao.update(editado);
         logger.info("Ingreso actualizado id {}: {} - ${} - {}", idEditando, tipo, monto, fecha);
@@ -152,14 +188,11 @@ public class IngresoController {
 
     } catch (NumberFormatException ex) {
       Toast.show(getStage(), "Monto inválido");
-      logger.error("Error al parsear monto", ex);
     } catch (SQLException ex) {
       Toast.show(getStage(), "Error al guardar ingreso");
       logger.error("Error al guardar ingreso", ex);
     }
   }
-
-  // --- Carga el ingreso seleccionado en el formulario para editar ---
 
   private void cargarEnFormulario(Ingreso i) {
     idEditando = i.getId();
@@ -168,19 +201,16 @@ public class IngresoController {
     txtMonto.setText(i.getMonto().toPlainString());
   }
 
-  // --- Eliminar con confirmación ---
-
   private void confirmarEliminar(Ingreso i) {
     Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
     alert.setTitle("Confirmar eliminación");
     alert.setHeaderText("¿Eliminar ingreso?");
-    alert.setContentText(i.getTipo() + " — " + i.getMonto() + " — " + i.getFecha());
+    alert.setContentText(i.getTipo() + " — " + CURRENCY.format(i.getMonto()) + " — " + i.getFecha());
 
     alert.showAndWait().ifPresent(respuesta -> {
       if (respuesta == ButtonType.OK) {
         try {
-          IngresoDao dao = new IngresoDao();
-          dao.delete(i.getId());
+          new IngresoDao().delete(i.getId());
           logger.info("Ingreso eliminado id {}", i.getId());
           MovimientoEventBus.publish("ingreso");
           Toast.show(getStage(), "Ingreso eliminado");
@@ -193,7 +223,11 @@ public class IngresoController {
     });
   }
 
-  // --- Limpia el formulario y vuelve a modo alta ---
+  /** Llamado desde DashboardController para precargar el mes visible */
+  public void setMesVisible(YearMonth mes) {
+    this.mesVisible = mes;
+    cargarTabla();
+  }
 
   @FXML
   private void limpiar() {

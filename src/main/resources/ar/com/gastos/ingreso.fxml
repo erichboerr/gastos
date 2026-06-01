@@ -4,7 +4,7 @@
 <?import javafx.scene.control.*?>
 
 <VBox xmlns:fx="http://javafx.com/fxml" fx:controller="ar.com.gastos.controller.IngresoController"
-      spacing="10" alignment="TOP_CENTER" style="-fx-padding:20;" prefWidth="600">
+      spacing="10" alignment="TOP_CENTER" style="-fx-padding:20;" prefWidth="620">
 
     <Label text="Ingresos" style="-fx-font-size:18; -fx-font-weight:bold;"/>
 
@@ -26,29 +26,31 @@
                 HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
         <Button text="Limpiar" onAction="#limpiar"
                 HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+        <Button text="Cerrar" onAction="#cerrar"
+                HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
     </HBox>
 
     <Separator/>
 
-    <!-- Lista de ingresos -->
-    <Label text="Ingresos cargados"/>
+    <!-- Navegación por mes -->
+    <HBox spacing="10" alignment="CENTER" style="-fx-padding:4 10 4 10; -fx-background-color:#f0f0f0;">
+        <Button text="◀" onAction="#meAnterior"
+                style="-fx-background-color:transparent; -fx-font-size:14; -fx-cursor:hand;"/>
+        <Label fx:id="lblMes"
+               style="-fx-font-size:14; -fx-font-weight:bold;" minWidth="140" alignment="CENTER"/>
+        <Button text="▶" onAction="#meSiguiente"
+                style="-fx-background-color:transparent; -fx-font-size:14; -fx-cursor:hand;"/>
+        <Label fx:id="lblTotalMes" style="-fx-font-size:13; -fx-text-fill:#27ae60;"/>
+    </HBox>
+
+    <!-- Lista de ingresos del mes -->
     <TableView fx:id="tablaIngresos" prefHeight="250" maxWidth="Infinity">
         <columns>
-            <TableColumn fx:id="colFecha"   text="Fecha"  prefWidth="110"/>
-            <TableColumn fx:id="colTipo"    text="Tipo"   prefWidth="160"/>
-            <TableColumn fx:id="colMonto"   text="Monto"  prefWidth="120"/>
-            <TableColumn fx:id="colAcciones" text="Acciones" prefWidth="150"/>
+            <TableColumn fx:id="colFecha"    text="Fecha"    prefWidth="110"/>
+            <TableColumn fx:id="colTipo"     text="Tipo"     prefWidth="160"/>
+            <TableColumn fx:id="colMonto"    text="Monto"    prefWidth="130"/>
+            <TableColumn fx:id="colAcciones" text="Acciones" prefWidth="170"/>
         </columns>
     </TableView>
-
-    <HBox spacing="8">
-        <Button text="Guardar" onAction="#guardarIngreso"
-                style="-fx-background-color:#2c3e50; -fx-text-fill:white; -fx-font-weight:bold;"
-                HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-        <Button text="Limpiar" onAction="#limpiar"
-                HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-        <Button text="Cerrar" onAction="#cerrar"
-                HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-    </HBox>
 
 </VBox>

@@ -263,7 +263,11 @@ public class DashboardController {
     Label lblTotal = new Label("Total: " + CURRENCY.format(totalIngresos));
     lblTotal.getStyleClass().add("card-body");
 
-    card.getChildren().addAll(lblTitulo, lblTotal);
+    Button btnDetalle = new Button("Ver detalle");
+    btnDetalle.setMaxWidth(Double.MAX_VALUE);
+    btnDetalle.setOnAction(e -> abrirDetalleIngresos());
+
+    card.getChildren().addAll(lblTitulo, lblTotal, new Separator(), btnDetalle);
     card.setStyle("-fx-padding:20; -fx-alignment:center;");
     return card;
   }
@@ -390,6 +394,23 @@ public class DashboardController {
     card.getChildren().addAll(lblNombre, new Separator(), lblSinCierre, new Separator(), hboxBotones);
     return card;
   }
+
+  private void abrirDetalleIngresos() {
+    try {
+      FXMLLoader loader = new FXMLLoader(getClass().getResource("/ar/com/gastos/ingreso.fxml"));
+      Scene scene = new Scene(loader.load(), 620, 600);
+      IngresoController ctrl = loader.getController();
+      ctrl.setMesVisible(mesVisible);
+      Stage stage = new Stage();
+      stage.setTitle("Ingresos - " + mesVisible.getMonth()
+          .getDisplayName(java.time.format.TextStyle.FULL, new Locale("es")));
+      stage.setScene(scene);
+      stage.show();
+    } catch (IOException ex) {
+      logger.error("Error al abrir detalle ingresos", ex);
+    }
+  }
+
 
   private Button crearBotonDetalle(Tarjeta t) {
     Button btn = new Button("Ver detalle");
