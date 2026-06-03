@@ -19,36 +19,28 @@ public class GastosRecurrentesController {
 
   private static final Logger logger = LoggerFactory.getLogger(GastosRecurrentesController.class);
 
-  @FXML private TextField        txtDescripcion;
-  @FXML private TextField        txtCategoria;
-  @FXML private ComboBox<String> cmbMedioPago;
-  @FXML private TableView<GastoRecurrente>        tablaRecurrentes;
+  @FXML private TextField txtDescripcion;
+  @FXML private TextField txtCategoria;
+  @FXML private TableView<GastoRecurrente>           tablaRecurrentes;
   @FXML private TableColumn<GastoRecurrente, String> colDescripcion;
   @FXML private TableColumn<GastoRecurrente, String> colCategoria;
-  @FXML private TableColumn<GastoRecurrente, String> colMedioPago;
   @FXML private TableColumn<GastoRecurrente, Void>   colAcciones;
 
-  // Cuando estamos editando, guardamos el id aquí. -1 = modo alta.
+  // Medio de pago siempre es DEBITO — no se expone en la UI
+  private static final String MEDIO_PAGO = "DEBITO";
+
   private int idEditando = -1;
 
   @FXML
   public void initialize() {
-    // Opciones fijas de medio de pago
-    cmbMedioPago.getItems().addAll("DEBITO", "CREDITO", "EFECTIVO");
-    cmbMedioPago.setValue("DEBITO");
-
     configurarTabla();
     cargarTabla();
   }
 
-  // --- Configuración de columnas ---
-
   private void configurarTabla() {
     colDescripcion.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
     colCategoria.setCellValueFactory(new PropertyValueFactory<>("categoria"));
-    colMedioPago.setCellValueFactory(new PropertyValueFactory<>("medioPago"));
 
-    // Columna de acciones: Editar + Eliminar por fila
     colAcciones.setCellFactory(col -> new TableCell<>() {
       private final Button btnEditar   = new Button("Editar");
       private final Button btnEliminar = new Button("Eliminar");
@@ -77,8 +69,6 @@ public class GastosRecurrentesController {
     });
   }
 
-  // --- Carga la tabla desde la DB ---
-
   private void cargarTabla() {
     try {
       GastoRecurrenteDao dao = new GastoRecurrenteDao();
@@ -89,16 +79,13 @@ public class GastosRecurrentesController {
     }
   }
 
-  // --- Alta / Modificación ---
-
   @FXML
   private void guardar() {
-    String descripcion = txtDescripcion.getText().trim();
+    String descripcion = txtDescripcion.getText().toUpperCase().trim();
     String categoria   = txtCategoria.getText().trim();
-    String medioPago   = cmbMedioPago.getValue();
 
-    if (descripcion.isEmpty() || medioPago == null) {
-      Toast.show(getStage(), "Descripción y medio de pago son obligatorios");
+    if (descripcion.isEmpty()) {
+      Toast.show(getStage(), "La descripción es obligatoria");
       return;
     }
 
@@ -106,14 +93,12 @@ public class GastosRecurrentesController {
       GastoRecurrenteDao dao = new GastoRecurrenteDao();
 
       if (idEditando == -1) {
-        // Modo alta
-        GastoRecurrente nuevo = new GastoRecurrente(descripcion, categoria, medioPago);
+        GastoRecurrente nuevo = new GastoRecurrente(descripcion, categoria, MEDIO_PAGO);
         dao.save(nuevo);
         logger.info("Gasto recurrente creado: {}", descripcion);
         Toast.show(getStage(), "Recurrente guardado");
       } else {
-        // Modo edición
-        GastoRecurrente editado = new GastoRecurrente(descripcion, categoria, medioPago);
+        GastoRecurrente editado = new GastoRecurrente(descripcion, categoria, MEDIO_PAGO);
         editado.setId(idEditando);
         dao.update(editado);
         logger.info("Gasto recurrente actualizado: {}", descripcion);
@@ -129,16 +114,11 @@ public class GastosRecurrentesController {
     }
   }
 
-  // --- Carga el seleccionado en el formulario para editar ---
-
   private void cargarEnFormulario(GastoRecurrente g) {
     idEditando = g.getId();
     txtDescripcion.setText(g.getDescripcion());
     txtCategoria.setText(g.getCategoria() != null ? g.getCategoria() : "");
-    cmbMedioPago.setValue(g.getMedioPago());
   }
-
-  // --- Eliminar con confirmación ---
 
   private void confirmarEliminar(GastoRecurrente g) {
     Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
@@ -149,8 +129,7 @@ public class GastosRecurrentesController {
     alert.showAndWait().ifPresent(respuesta -> {
       if (respuesta == ButtonType.OK) {
         try {
-          GastoRecurrenteDao dao = new GastoRecurrenteDao();
-          dao.delete(g.getId());
+          new GastoRecurrenteDao().delete(g.getId());
           logger.info("Gasto recurrente eliminado: {}", g.getDescripcion());
           Toast.show(getStage(), "Recurrente eliminado");
           limpiar();
@@ -163,14 +142,11 @@ public class GastosRecurrentesController {
     });
   }
 
-  // --- Limpia el formulario y vuelve a modo alta ---
-
   @FXML
   private void limpiar() {
     idEditando = -1;
     txtDescripcion.clear();
     txtCategoria.clear();
-    cmbMedioPago.setValue("DEBITO");
   }
 
   @FXML

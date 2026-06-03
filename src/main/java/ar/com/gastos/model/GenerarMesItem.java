@@ -1,24 +1,32 @@
 package ar.com.gastos.model;
 
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
+import java.time.LocalDate;
+
 /**
  * Modelo auxiliar para la pantalla "Generar mes".
- * Representa una fila en la lista: checkbox + descripción + monto a ingresar.
+ * Representa una fila: checkbox + descripción + fecha individual + monto.
+ * Arranca deseleccionado — el usuario elige cuáles generar.
  * No se persiste — es solo para la UI.
  */
 public class GenerarMesItem {
 
-  // Si está marcado se generará el egreso al confirmar
-  private final BooleanProperty seleccionado = new SimpleBooleanProperty(true);
+  // Arranca en falso — el usuario selecciona los que necesita
+  private final BooleanProperty seleccionado = new SimpleBooleanProperty(false);
 
-  // Monto ingresado por el usuario en esa fila
+  // Fecha individual por ítem
+  private final ObjectProperty<LocalDate> fecha =
+      new SimpleObjectProperty<>(LocalDate.now());
+
+  // Monto ingresado por el usuario
   private final StringProperty monto = new SimpleStringProperty("");
 
-  // Referencia al recurrente original
   private final GastoRecurrente gastoRecurrente;
 
   public GenerarMesItem(GastoRecurrente gastoRecurrente) {
@@ -30,6 +38,10 @@ public class GenerarMesItem {
   public boolean isSeleccionado() { return seleccionado.get(); }
   public BooleanProperty seleccionadoProperty() { return seleccionado; }
   public void setSeleccionado(boolean v) { seleccionado.set(v); }
+
+  public LocalDate getFecha() { return fecha.get(); }
+  public ObjectProperty<LocalDate> fechaProperty() { return fecha; }
+  public void setFecha(LocalDate v) { fecha.set(v); }
 
   public String getMonto() { return monto.get(); }
   public StringProperty montoProperty() { return monto; }

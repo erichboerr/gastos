@@ -6,29 +6,28 @@
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="ar.com.gastos.controller.GenerarMesController"
       spacing="12" alignment="TOP_CENTER" style="-fx-padding:20;"
-      prefWidth="400">
+      prefWidth="520">
 
     <Label text="Generar Gastos del Mes"
            style="-fx-font-size:16; -fx-font-weight:bold; -fx-text-fill:#2c3e50;"/>
 
     <Separator/>
 
-    <!-- Selector de mes -->
-    <Label text="Mes a generar"/>
-    <DatePicker fx:id="dpMes" maxWidth="Infinity"/>
+    <!-- Lista de recurrentes — fecha y monto por ítem -->
+    <Label text="Seleccioná los gastos a generar"/>
+    <ListView fx:id="lstItems" prefHeight="300"/>
 
     <Separator/>
 
-    <!-- Lista de recurrentes con monto editable -->
-    <Label text="Gastos recurrentes (DÉBITO / EFECTIVO)"/>
-    <ListView fx:id="lstItems" prefHeight="250"/>
-
-    <Separator/>
-
-    <!-- Botón generar -->
-    <Button text="Generar egresos"
-            onAction="#generarEgresos"
-            maxWidth="Infinity"
-            style="-fx-background-color:#2c3e50; -fx-text-fill:white; -fx-font-weight:bold;"/>
+    <HBox spacing="8">
+        <Button text="Generar seleccionados"
+                onAction="#generarEgresos"
+                style="-fx-background-color:#2c3e50; -fx-text-fill:white; -fx-font-weight:bold;"
+                HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+        <Button text="Limpiar" onAction="#limpiar"
+                HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+        <Button text="Cerrar" onAction="#cerrar"
+                HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+    </HBox>
 
 </VBox>

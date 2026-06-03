@@ -12,6 +12,7 @@ import ar.com.gastos.util.Toast;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,28 +28,39 @@ public class GenerarMesController {
 
   private static final Logger logger = LoggerFactory.getLogger(GenerarMesController.class);
 
-  @FXML private DatePicker dpMes;
   @FXML private ListView<GenerarMesItem> lstItems;
 
   @FXML
   public void initialize() {
-    // Mes por defecto: el actual
-    dpMes.setValue(LocalDate.now().withDayOfMonth(1));
-
-    // Cada celda muestra: [checkbox] [descripción - medio pago] [campo monto]
     lstItems.setCellFactory(lv -> new ListCell<>() {
-      private final CheckBox chk = new CheckBox();
-      private final javafx.scene.control.Label lblDesc = new javafx.scene.control.Label();
-      private final TextField txtMonto = new TextField();
-      private final HBox hbox = new HBox(10, chk, lblDesc, txtMonto);
+
+      private final CheckBox   chk      = new CheckBox();
+      private final Label      lblDesc  = new Label();
+      private final DatePicker dpFecha  = new DatePicker();
+      private final TextField  txtMonto = new TextField();
+      private final HBox       hbox     = new HBox(8, chk, lblDesc, dpFecha, txtMonto);
 
       {
-        HBox.setHgrow(lblDesc, javafx.scene.layout.Priority.ALWAYS);
+        HBox.setHgrow(lblDesc, Priority.ALWAYS);
+        dpFecha.setPrefWidth(130);
+        dpFecha.setValue(LocalDate.now());
         txtMonto.setPromptText("0.00");
         txtMonto.setPrefWidth(90);
+
+        // El DatePicker y el monto arrancan deshabilitados
+        // Se habilitan solo cuando el checkbox está marcado
+        dpFecha.setDisable(true);
+        txtMonto.setDisable(true);
+
+        chk.selectedProperty().addListener((obs, anterior, seleccionado) -> {
+          dpFecha.setDisable(!seleccionado);
+          txtMonto.setDisable(!seleccionado);
+          if (!seleccionado) {
+            txtMonto.clear();
+          }
+        });
       }
 
-      // Guardamos el item anterior para desconectar sus listeners
       private GenerarMesItem itemActual = null;
 
       @Override
@@ -57,26 +69,32 @@ public class GenerarMesController {
 
         if (empty || item == null) {
           setGraphic(null);
-          // Desconectamos bindings del item anterior si existía
           if (itemActual != null) {
             chk.selectedProperty().unbindBidirectional(itemActual.seleccionadoProperty());
+            dpFecha.valueProperty().unbindBidirectional(itemActual.fechaProperty());
             txtMonto.textProperty().unbindBidirectional(itemActual.montoProperty());
             itemActual = null;
           }
           return;
         }
 
-        // Desconectamos el item anterior antes de bindear el nuevo
         if (itemActual != null) {
           chk.selectedProperty().unbindBidirectional(itemActual.seleccionadoProperty());
+          dpFecha.valueProperty().unbindBidirectional(itemActual.fechaProperty());
           txtMonto.textProperty().unbindBidirectional(itemActual.montoProperty());
         }
 
         itemActual = item;
         chk.selectedProperty().bindBidirectional(item.seleccionadoProperty());
-        lblDesc.setText(item.getGastoRecurrente().getDescripcion()
-            + " (" + item.getGastoRecurrente().getMedioPago() + ")");
+        dpFecha.valueProperty().bindBidirectional(item.fechaProperty());
         txtMonto.textProperty().bindBidirectional(item.montoProperty());
+
+        lblDesc.setText(item.getGastoRecurrente().getDescripcion());
+
+        // Sincronizamos el estado visual con el modelo
+        dpFecha.setDisable(!item.isSeleccionado());
+        txtMonto.setDisable(!item.isSeleccionado());
+
         setGraphic(hbox);
       }
     });
@@ -84,7 +102,7 @@ public class GenerarMesController {
     cargarRecurrentes();
   }
 
-  // --- Carga solo los recurrentes DEBITO y EFECTIVO ---
+  // --- Carga los recurrentes DEBITO ---
 
   private void cargarRecurrentes() {
     lstItems.getItems().clear();
@@ -101,17 +119,11 @@ public class GenerarMesController {
     }
   }
 
-  // --- Genera los egresos reales en la tabla movimientos ---
+  // --- Genera los egresos seleccionados ---
 
   @FXML
   private void generarEgresos() {
-    LocalDate fechaMes = dpMes.getValue();
-    if (fechaMes == null) {
-      Toast.show(getStage(), "Seleccione el mes a generar");
-      return;
-    }
-
-    // Buscamos la tarjeta DEBITO — todos los recurrentes van ahí
+    // Buscamos la tarjeta DEBITO
     Tarjeta tarjetaDebito;
     try {
       TarjetaDao tarjetaDao = new TarjetaDao();
@@ -126,27 +138,15 @@ public class GenerarMesController {
       return;
     }
 
-    // Verificamos si ya se generaron recurrentes para este mes
-    try {
-      MovimientoDao checkDao = new MovimientoDao();
-      if (checkDao.existeRecurrenteEnMes(tarjetaDebito.getId(), fechaMes)) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Atención");
-        alert.setHeaderText("Ya se generaron recurrentes para este mes");
-        alert.setContentText("¿Querés generarlos de todas formas? Esto puede duplicar egresos.");
+    // Verificamos que haya al menos un ítem seleccionado con fecha y monto
+    boolean haySeleccionados = lstItems.getItems().stream()
+        .anyMatch(i -> i.isSeleccionado() && !i.getMonto().trim().isEmpty());
 
-        ButtonType btnSi  = new ButtonType("Sí, generar igual");
-        ButtonType btnNo  = new ButtonType("Cancelar", ButtonBar.ButtonData.CANCEL_CLOSE);
-        alert.getButtonTypes().setAll(btnSi, btnNo);
-
-        Optional<ButtonType> respuesta = alert.showAndWait();
-        if (respuesta.isEmpty() || respuesta.get() == btnNo) return;
-      }
-    } catch (SQLException ex) {
-      logger.error("Error al verificar recurrentes existentes", ex);
+    if (!haySeleccionados) {
+      Toast.show(getStage(), "Seleccioná al menos un ítem con monto");
+      return;
     }
 
-    // Procesamos solo los items seleccionados con monto válido
     List<String> errores = new ArrayList<>();
     int generados = 0;
 
@@ -154,26 +154,30 @@ public class GenerarMesController {
       if (!item.isSeleccionado()) continue;
 
       String montoStr = item.getMonto().trim();
-      if (montoStr.isEmpty()) continue; // sin monto lo saltamos silenciosamente
+      if (montoStr.isEmpty()) continue;
+
+      LocalDate fecha = item.getFecha();
+      if (fecha == null) {
+        errores.add(item.getGastoRecurrente().getDescripcion() + ": fecha inválida");
+        continue;
+      }
 
       try {
         BigDecimal monto = new BigDecimal(montoStr).setScale(2);
         GastoRecurrente g = item.getGastoRecurrente();
 
-        // Constructor para recurrentes — descripción libre, sin comercio_id
         Movimiento mov = new Movimiento(
             tarjetaDebito.getId(),
-            fechaMes,
+            fecha,
             g.getDescripcion().toUpperCase().trim(),
             monto,
             "EGRESO",
             "ARS"
         );
 
-        MovimientoDao dao = new MovimientoDao();
-        dao.save(mov);
+        new MovimientoDao().save(mov);
         generados++;
-        logger.info("Recurrente generado: {} - ${} - {}", g.getDescripcion(), monto, fechaMes);
+        logger.info("Recurrente generado: {} - ${} - {}", g.getDescripcion(), monto, fecha);
 
       } catch (NumberFormatException ex) {
         errores.add(item.getGastoRecurrente().getDescripcion() + ": monto inválido");
@@ -183,22 +187,36 @@ public class GenerarMesController {
       }
     }
 
-    // Notificamos al dashboard para que se recargue
     if (generados > 0) {
       MovimientoEventBus.publish("recurrentes");
     }
 
-    // Feedback al usuario
     if (errores.isEmpty()) {
       Toast.show(getStage(), generados + " egreso(s) generado(s) correctamente");
     } else {
       Toast.show(getStage(), generados + " generado(s). Errores: " + String.join(", ", errores));
     }
+
+    limpiar();
   }
 
-  // --- Helper para obtener el Stage ---
+  // --- Limpia la selección y montos ---
+
+  @FXML
+  private void limpiar() {
+    for (GenerarMesItem item : lstItems.getItems()) {
+      item.setSeleccionado(false);
+      item.setMonto("");
+      item.setFecha(LocalDate.now());
+    }
+  }
+
+  @FXML
+  private void cerrar() {
+    getStage().close();
+  }
 
   private Stage getStage() {
-    return (Stage) dpMes.getScene().getWindow();
+    return (Stage) lstItems.getScene().getWindow();
   }
 }
