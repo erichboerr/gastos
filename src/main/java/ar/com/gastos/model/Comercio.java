@@ -14,14 +14,18 @@ public class Comercio {
 
   // --- Constructores ---
 
-  /** Constructor para alta — sin id todavía */
+  /**
+   * Constructor para alta — sin id todavía
+   */
   public Comercio(String nombre, String categoria) {
     this.nombre = nombre;
     this.categoria = categoria;
     this.habilitado = true;
   }
 
-  /** Constructor completo — usado al leer desde la DB */
+  /**
+   * Constructor completo — usado al leer desde la DB
+   */
   public Comercio(int id, String nombre, String categoria, boolean habilitado) {
     this.id = id;
     this.nombre = nombre;
@@ -31,19 +35,41 @@ public class Comercio {
 
   // --- Getters y Setters ---
 
-  public int getId() { return id; }
-  public void setId(int id) { this.id = id; }
+  public int getId() {
+    return id;
+  }
 
-  public String getNombre() { return nombre; }
-  public void setNombre(String nombre) { this.nombre = nombre; }
+  public void setId(int id) {
+    this.id = id;
+  }
 
-  public String getCategoria() { return categoria; }
-  public void setCategoria(String categoria) { this.categoria = categoria; }
+  public String getNombre() {
+    return nombre;
+  }
 
-  public boolean isHabilitado() { return habilitado; }
-  public void setHabilitado(boolean habilitado) { this.habilitado = habilitado; }
+  public void setNombre(String nombre) {
+    this.nombre = nombre;
+  }
+
+  public String getCategoria() {
+    return categoria;
+  }
+
+  public void setCategoria(String categoria) {
+    this.categoria = categoria;
+  }
+
+  public boolean isHabilitado() {
+    return habilitado;
+  }
+
+  public void setHabilitado(boolean habilitado) {
+    this.habilitado = habilitado;
+  }
 
   // Usado por ComboBox para mostrar el nombre directamente
   @Override
-  public String toString() { return nombre; }
+  public String toString() {
+    return nombre;
+  }
 }

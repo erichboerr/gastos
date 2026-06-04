@@ -18,18 +18,43 @@ public class Cuota {
     this.estado = estado;
   }
 
-  public int getId() { return id; }
-  public void setId(int id) { this.id = id; }
+  public int getId() {
+    return id;
+  }
 
-  public int getMovimientoId() { return movimientoId; }
-  public void setMovimientoId(int movimientoId) { this.movimientoId = movimientoId; }
+  public void setId(int id) {
+    this.id = id;
+  }
 
-  public int getNroCuota() { return nroCuota; }
-  public void setNroCuota(int nroCuota) { this.nroCuota = nroCuota; }
+  public int getMovimientoId() {
+    return movimientoId;
+  }
 
-  public BigDecimal getMonto() { return monto; }
-  public void setMonto(BigDecimal monto) { this.monto = monto; }
+  public void setMovimientoId(int movimientoId) {
+    this.movimientoId = movimientoId;
+  }
 
-  public String getEstado() { return estado; }
-  public void setEstado(String estado) { this.estado = estado; }
+  public int getNroCuota() {
+    return nroCuota;
+  }
+
+  public void setNroCuota(int nroCuota) {
+    this.nroCuota = nroCuota;
+  }
+
+  public BigDecimal getMonto() {
+    return monto;
+  }
+
+  public void setMonto(BigDecimal monto) {
+    this.monto = monto;
+  }
+
+  public String getEstado() {
+    return estado;
+  }
+
+  public void setEstado(String estado) {
+    this.estado = estado;
+  }
 }

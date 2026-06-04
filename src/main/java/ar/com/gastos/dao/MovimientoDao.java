@@ -58,10 +58,10 @@ public class MovimientoDao {
 
   /**
    * Genera las cuotas de un movimiento y las inserta en la tabla cuota.
-   *
+   * <p>
    * BUG CORREGIDO: antes se usaba double para dividir el monto.
    * Para dinero SIEMPRE se usa BigDecimal con escala y RoundingMode explícitos.
-   *
+   * <p>
    * MEJORA: el residuo de centavos se suma a la última cuota,
    * garantizando que cuota1 + ... + cuotaN == monto total exacto.
    * Ejemplo: $100.00 / 3 → cuota1=33.33, cuota2=33.33, cuota3=33.34
@@ -93,7 +93,7 @@ public class MovimientoDao {
         // Garantiza que ninguna cuota se salte un período por caer después del cierre.
         LocalDate fechaCuota = (i == 1)
             ? fechaBase
-            // ✅ Ahora — día 1 del mes correspondiente
+            // día 1 del mes correspondiente
             : fechaBase.plusMonths(i - 1).withDayOfMonth(1);
 
         ps.setInt(1, movimientoId);
@@ -109,7 +109,9 @@ public class MovimientoDao {
 
   // --- Consultas ---
 
-  /** Retorna todos los movimientos de una tarjeta ordenados por fecha ASC */
+  /**
+   * Retorna todos los movimientos de una tarjeta ordenados por fecha ASC
+   */
   public List<Movimiento> findByTarjeta(int tarjetaId) throws SQLException {
     List<Movimiento> lista = new ArrayList<>();
     String sql = "SELECT m.*, COALESCE(co.nombre, m.descripcion) AS label " +
@@ -135,20 +137,20 @@ public class MovimientoDao {
    * Para el período dado retorna:
    * - Movimientos de cuota única cuya fecha cae en el período
    * - Movimientos en cuotas que tienen al menos una cuota con
-   *   fecha_vencimiento dentro del período
+   * fecha_vencimiento dentro del período
    * Incluye el nombre del comercio como descripción via JOIN.
    */
   public List<Movimiento> findByTarjetaEnRangoPeriodo(int tarjetaId, LocalDate desde, LocalDate hasta)
       throws SQLException {
     String sql =
-          "SELECT DISTINCT m.*, COALESCE(co.nombre, m.descripcion) AS label " +
-                "FROM movimiento m " +
-                "LEFT JOIN comercio co ON co.id = m.comercio_id " +
-                "WHERE m.tarjeta_id = ? AND (" +
-                "  (m.cuotas = 1 AND m.fecha BETWEEN ? AND ?) " +
-                "  OR " +
-                "  (m.cuotas > 1 AND m.fecha <= ?)" + // compradas antes o durante el período
-                ") ORDER BY m.fecha ASC";
+        "SELECT DISTINCT m.*, COALESCE(co.nombre, m.descripcion) AS label " +
+            "FROM movimiento m " +
+            "LEFT JOIN comercio co ON co.id = m.comercio_id " +
+            "WHERE m.tarjeta_id = ? AND (" +
+            "  (m.cuotas = 1 AND m.fecha BETWEEN ? AND ?) " +
+            "  OR " +
+            "  (m.cuotas > 1 AND m.fecha <= ?)" + // compradas antes o durante el período
+            ") ORDER BY m.fecha ASC";
 
     List<Movimiento> lista = new ArrayList<>();
     try (Connection c = Db.getDataSource().getConnection();
@@ -167,7 +169,9 @@ public class MovimientoDao {
     return lista;
   }
 
-  /** Verifica si ya existen movimientos con descripción libre para una tarjeta en una fecha dada */
+  /**
+   * Verifica si ya existen movimientos con descripción libre para una tarjeta en una fecha dada
+   */
   public boolean existeRecurrenteEnMes(int tarjetaId, LocalDate fecha) throws SQLException {
     String sql = "SELECT COUNT(*) FROM movimiento " +
         "WHERE tarjeta_id = ? AND fecha = ? AND categoria = 'EGRESO' AND comercio_id IS NULL";

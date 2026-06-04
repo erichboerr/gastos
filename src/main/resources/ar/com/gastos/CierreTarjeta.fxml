@@ -39,10 +39,10 @@
     <Label text="Cierres registrados"/>
     <TableView fx:id="tablaCierres" prefHeight="200" maxWidth="Infinity">
         <columns>
-            <TableColumn fx:id="colMes"         text="Mes"         prefWidth="110"/>
-            <TableColumn fx:id="colFechaCierre"  text="Cierre"      prefWidth="110"/>
-            <TableColumn fx:id="colFechaVenc"    text="Vencimiento" prefWidth="110"/>
-            <TableColumn fx:id="colAcciones"     text="Acciones"    prefWidth="190"/>
+            <TableColumn fx:id="colMes" text="Mes" prefWidth="110"/>
+            <TableColumn fx:id="colFechaCierre" text="Cierre" prefWidth="110"/>
+            <TableColumn fx:id="colFechaVenc" text="Vencimiento" prefWidth="110"/>
+            <TableColumn fx:id="colAcciones" text="Acciones" prefWidth="190"/>
         </columns>
     </TableView>
 

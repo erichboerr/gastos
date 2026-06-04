@@ -5,6 +5,7 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
 import ar.com.gastos.model.Ingreso;
 import ar.com.gastos.util.Db;
 
@@ -42,7 +43,9 @@ public class IngresoDao {
     return ingresos;
   }
 
-  /** Actualiza tipo, monto y fecha de un ingreso existente */
+  /**
+   * Actualiza tipo, monto y fecha de un ingreso existente
+   */
   public void update(Ingreso i) throws SQLException {
     String sql = "UPDATE ingreso SET fecha=?, tipo=?, monto=? WHERE id=?";
     try (Connection conn = Db.getDataSource().getConnection();
@@ -55,7 +58,9 @@ public class IngresoDao {
     }
   }
 
-  /** Elimina un ingreso por id */
+  /**
+   * Elimina un ingreso por id
+   */
   public void delete(int id) throws SQLException {
     String sql = "DELETE FROM ingreso WHERE id=?";
     try (Connection conn = Db.getDataSource().getConnection();

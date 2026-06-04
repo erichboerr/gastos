@@ -19,12 +19,18 @@ public class GastosRecurrentesController {
 
   private static final Logger logger = LoggerFactory.getLogger(GastosRecurrentesController.class);
 
-  @FXML private TextField txtDescripcion;
-  @FXML private TextField txtCategoria;
-  @FXML private TableView<GastoRecurrente>           tablaRecurrentes;
-  @FXML private TableColumn<GastoRecurrente, String> colDescripcion;
-  @FXML private TableColumn<GastoRecurrente, String> colCategoria;
-  @FXML private TableColumn<GastoRecurrente, Void>   colAcciones;
+  @FXML
+  private TextField txtDescripcion;
+  @FXML
+  private TextField txtCategoria;
+  @FXML
+  private TableView<GastoRecurrente> tablaRecurrentes;
+  @FXML
+  private TableColumn<GastoRecurrente, String> colDescripcion;
+  @FXML
+  private TableColumn<GastoRecurrente, String> colCategoria;
+  @FXML
+  private TableColumn<GastoRecurrente, Void> colAcciones;
 
   // Medio de pago siempre es DEBITO — no se expone en la UI
   private static final String MEDIO_PAGO = "DEBITO";
@@ -42,9 +48,9 @@ public class GastosRecurrentesController {
     colCategoria.setCellValueFactory(new PropertyValueFactory<>("categoria"));
 
     colAcciones.setCellFactory(col -> new TableCell<>() {
-      private final Button btnEditar   = new Button("Editar");
+      private final Button btnEditar = new Button("Editar");
       private final Button btnEliminar = new Button("Eliminar");
-      private final HBox   hbox        = new HBox(6, btnEditar, btnEliminar);
+      private final HBox hbox = new HBox(6, btnEditar, btnEliminar);
 
       {
         btnEditar.setStyle("-fx-background-color:#2c3e50; -fx-text-fill:white; -fx-font-size:11;");
@@ -82,7 +88,7 @@ public class GastosRecurrentesController {
   @FXML
   private void guardar() {
     String descripcion = txtDescripcion.getText().toUpperCase().trim();
-    String categoria   = txtCategoria.getText().trim();
+    String categoria = txtCategoria.getText().trim();
 
     if (descripcion.isEmpty()) {
       Toast.show(getStage(), "La descripción es obligatoria");

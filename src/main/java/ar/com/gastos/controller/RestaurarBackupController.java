@@ -17,8 +17,10 @@ public class RestaurarBackupController {
 
   private static final Logger logger = LoggerFactory.getLogger(RestaurarBackupController.class);
 
-  @FXML private ListView<String> lstBackups;
-  @FXML private Button btnRestaurar;
+  @FXML
+  private ListView<String> lstBackups;
+  @FXML
+  private Button btnRestaurar;
 
   @FXML
   public void initialize() {
@@ -72,8 +74,8 @@ public class RestaurarBackupController {
             "¿Estás seguro de que querés continuar?"
     );
 
-    ButtonType btnSi  = new ButtonType("Sí, restaurar", ButtonBar.ButtonData.OK_DONE);
-    ButtonType btnNo  = new ButtonType("Cancelar",       ButtonBar.ButtonData.CANCEL_CLOSE);
+    ButtonType btnSi = new ButtonType("Sí, restaurar", ButtonBar.ButtonData.OK_DONE);
+    ButtonType btnNo = new ButtonType("Cancelar", ButtonBar.ButtonData.CANCEL_CLOSE);
     alert.getButtonTypes().setAll(btnSi, btnNo);
 
     Optional<ButtonType> respuesta = alert.showAndWait();

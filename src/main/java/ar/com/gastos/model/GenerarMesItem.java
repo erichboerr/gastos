@@ -33,17 +33,43 @@ public class GenerarMesItem {
     this.gastoRecurrente = gastoRecurrente;
   }
 
-  public GastoRecurrente getGastoRecurrente() { return gastoRecurrente; }
+  public GastoRecurrente getGastoRecurrente() {
+    return gastoRecurrente;
+  }
 
-  public boolean isSeleccionado() { return seleccionado.get(); }
-  public BooleanProperty seleccionadoProperty() { return seleccionado; }
-  public void setSeleccionado(boolean v) { seleccionado.set(v); }
+  public boolean isSeleccionado() {
+    return seleccionado.get();
+  }
 
-  public LocalDate getFecha() { return fecha.get(); }
-  public ObjectProperty<LocalDate> fechaProperty() { return fecha; }
-  public void setFecha(LocalDate v) { fecha.set(v); }
+  public BooleanProperty seleccionadoProperty() {
+    return seleccionado;
+  }
 
-  public String getMonto() { return monto.get(); }
-  public StringProperty montoProperty() { return monto; }
-  public void setMonto(String v) { monto.set(v); }
+  public void setSeleccionado(boolean v) {
+    seleccionado.set(v);
+  }
+
+  public LocalDate getFecha() {
+    return fecha.get();
+  }
+
+  public ObjectProperty<LocalDate> fechaProperty() {
+    return fecha;
+  }
+
+  public void setFecha(LocalDate v) {
+    fecha.set(v);
+  }
+
+  public String getMonto() {
+    return monto.get();
+  }
+
+  public StringProperty montoProperty() {
+    return monto;
+  }
+
+  public void setMonto(String v) {
+    monto.set(v);
+  }
 }

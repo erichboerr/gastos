@@ -18,15 +18,16 @@
                 <Button text="◀" onAction="#meAnterior"
                         style="-fx-background-color:transparent; -fx-text-fill:white; -fx-font-size:16; -fx-cursor:hand;"/>
                 <Label fx:id="lblMesNavegacion"
-                       style="-fx-text-fill:white; -fx-font-size:15; -fx-font-weight:bold;" minWidth="140" alignment="CENTER"/>
+                       style="-fx-text-fill:white; -fx-font-size:15; -fx-font-weight:bold;" minWidth="140"
+                       alignment="CENTER"/>
                 <Button text="▶" onAction="#meSiguiente"
                         style="-fx-background-color:transparent; -fx-text-fill:white; -fx-font-size:16; -fx-cursor:hand;"/>
             </HBox>
 
             <HBox spacing="30" alignment="CENTER" HBox.hgrow="ALWAYS">
                 <Label fx:id="lblIngresos" style="-fx-text-fill:#2ecc71; -fx-font-size:13;"/>
-                <Label fx:id="lblEgresos"  style="-fx-text-fill:#e74c3c; -fx-font-size:13;"/>
-                <Label fx:id="lblBalance"  style="-fx-text-fill:white;   -fx-font-size:14; -fx-font-weight:bold;"/>
+                <Label fx:id="lblEgresos" style="-fx-text-fill:#e74c3c; -fx-font-size:13;"/>
+                <Label fx:id="lblBalance" style="-fx-text-fill:white;   -fx-font-size:14; -fx-font-weight:bold;"/>
             </HBox>
 
         </HBox>
@@ -41,24 +42,24 @@
               spacing="12" alignment="TOP_CENTER" prefHeight="10000">
             <Label text="Tarjetas"
                    style="-fx-text-fill:black; -fx-font-size:16; -fx-font-weight:bold;"/>
-            <Button text="Nueva Tarjeta"  onAction="#abrirNuevaTarjeta"  maxWidth="Infinity"/>
+            <Button text="Nueva Tarjeta" onAction="#abrirNuevaTarjeta" maxWidth="Infinity"/>
             <Separator/>
             <Label text="Movimientos"
                    style="-fx-text-fill:black; -fx-font-size:16; -fx-font-weight:bold;"/>
-            <Button text="Ingresos"       onAction="#abrirIngreso"       maxWidth="Infinity"/>
-            <Button text="Egresos"        onAction="#abrirEgreso"        maxWidth="Infinity"/>
-            <Button text="Pagos"          onAction="#abrirPago"          maxWidth="Infinity"/>
+            <Button text="Ingresos" onAction="#abrirIngreso" maxWidth="Infinity"/>
+            <Button text="Egresos" onAction="#abrirEgreso" maxWidth="Infinity"/>
+            <Button text="Pagos" onAction="#abrirPago" maxWidth="Infinity"/>
             <Separator/>
             <Label text="Carga de datos"
                    style="-fx-text-fill:black; -fx-font-size:16; -fx-font-weight:bold;"/>
             <Button text="Recurrentes" onAction="#abrirRecurrentes" maxWidth="Infinity"/>
             <Button text="Comercios" onAction="#abrirComercios" maxWidth="Infinity"/>
             <Button text="Generar Mes" onAction="#abrirGenerarMes" maxWidth="Infinity"/>
-            <Button text="Cierres"        onAction="#abrirCierreTarjeta" maxWidth="Infinity"/>
+            <Button text="Cierres" onAction="#abrirCierreTarjeta" maxWidth="Infinity"/>
             <Separator/>
             <Label text="Resumenes"
                    style="-fx-text-fill:black; -fx-font-size:16; -fx-font-weight:bold;"/>
-            <Button text="Resumen Anual"  onAction="#abrirResumenAnual"  maxWidth="Infinity"/>
+            <Button text="Resumen Anual" onAction="#abrirResumenAnual" maxWidth="Infinity"/>
 
             <Separator/>
             <Label text="Backups Base de Datos"

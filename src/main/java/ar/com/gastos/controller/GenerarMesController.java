@@ -28,17 +28,18 @@ public class GenerarMesController {
 
   private static final Logger logger = LoggerFactory.getLogger(GenerarMesController.class);
 
-  @FXML private ListView<GenerarMesItem> lstItems;
+  @FXML
+  private ListView<GenerarMesItem> lstItems;
 
   @FXML
   public void initialize() {
     lstItems.setCellFactory(lv -> new ListCell<>() {
 
-      private final CheckBox   chk      = new CheckBox();
-      private final Label      lblDesc  = new Label();
-      private final DatePicker dpFecha  = new DatePicker();
-      private final TextField  txtMonto = new TextField();
-      private final HBox       hbox     = new HBox(8, chk, lblDesc, dpFecha, txtMonto);
+      private final CheckBox chk = new CheckBox();
+      private final Label lblDesc = new Label();
+      private final DatePicker dpFecha = new DatePicker();
+      private final TextField txtMonto = new TextField();
+      private final HBox hbox = new HBox(8, chk, lblDesc, dpFecha, txtMonto);
 
       {
         HBox.setHgrow(lblDesc, Priority.ALWAYS);

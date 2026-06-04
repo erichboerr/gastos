@@ -28,16 +28,26 @@ public class IngresoController {
 
   private static final Logger logger = LoggerFactory.getLogger(IngresoController.class);
 
-  @FXML private ComboBox<String>  cmbTipoIngreso;
-  @FXML private DatePicker        dpFecha;
-  @FXML private TextField         txtMonto;
-  @FXML private Label             lblMes;
-  @FXML private Label             lblTotalMes;
-  @FXML private TableView<Ingreso>          tablaIngresos;
-  @FXML private TableColumn<Ingreso, LocalDate>   colFecha;
-  @FXML private TableColumn<Ingreso, String>      colTipo;
-  @FXML private TableColumn<Ingreso, BigDecimal>  colMonto;
-  @FXML private TableColumn<Ingreso, Void>        colAcciones;
+  @FXML
+  private ComboBox<String> cmbTipoIngreso;
+  @FXML
+  private DatePicker dpFecha;
+  @FXML
+  private TextField txtMonto;
+  @FXML
+  private Label lblMes;
+  @FXML
+  private Label lblTotalMes;
+  @FXML
+  private TableView<Ingreso> tablaIngresos;
+  @FXML
+  private TableColumn<Ingreso, LocalDate> colFecha;
+  @FXML
+  private TableColumn<Ingreso, String> colTipo;
+  @FXML
+  private TableColumn<Ingreso, BigDecimal> colMonto;
+  @FXML
+  private TableColumn<Ingreso, Void> colAcciones;
 
   // Mes navegable
   private YearMonth mesVisible = YearMonth.now();
@@ -47,7 +57,10 @@ public class IngresoController {
 
   private static final NumberFormat CURRENCY =
       NumberFormat.getCurrencyInstance(new Locale("es", "AR"));
-  static { CURRENCY.setMaximumFractionDigits(2); }
+
+  static {
+    CURRENCY.setMaximumFractionDigits(2);
+  }
 
   @FXML
   public void initialize() {
@@ -96,9 +109,9 @@ public class IngresoController {
     });
 
     colAcciones.setCellFactory(col -> new TableCell<>() {
-      private final Button btnEditar   = new Button("Editar");
+      private final Button btnEditar = new Button("Editar");
       private final Button btnEliminar = new Button("Eliminar");
-      private final HBox   hbox        = new HBox(6, btnEditar, btnEliminar);
+      private final HBox hbox = new HBox(6, btnEditar, btnEliminar);
 
       {
         btnEditar.setStyle("-fx-background-color:#2c3e50; -fx-text-fill:white; -fx-font-size:11;");
@@ -158,7 +171,7 @@ public class IngresoController {
 
   @FXML
   private void guardarIngreso() {
-    String tipo     = cmbTipoIngreso.getEditor().getText().trim();
+    String tipo = cmbTipoIngreso.getEditor().getText().trim();
     String montoStr = txtMonto.getText().trim();
     LocalDate fecha = dpFecha.getValue();
 
@@ -223,7 +236,9 @@ public class IngresoController {
     });
   }
 
-  /** Llamado desde DashboardController para precargar el mes visible */
+  /**
+   * Llamado desde DashboardController para precargar el mes visible
+   */
   public void setMesVisible(YearMonth mes) {
     this.mesVisible = mes;
     cargarTabla();

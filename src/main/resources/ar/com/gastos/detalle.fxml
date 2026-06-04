@@ -20,19 +20,19 @@
                         style="-fx-background-color:transparent; -fx-font-size:14; -fx-cursor:hand;"/>
                 <Separator orientation="VERTICAL"/>
                 <Label fx:id="lblConsumos" style="-fx-font-size:12; -fx-text-fill:#2c3e50;"/>
-                <Label fx:id="lblPagos"    style="-fx-font-size:12; -fx-text-fill:#27ae60;"/>
-                <Label fx:id="lblSaldo"    style="-fx-font-size:12; -fx-font-weight:bold;"/>
+                <Label fx:id="lblPagos" style="-fx-font-size:12; -fx-text-fill:#27ae60;"/>
+                <Label fx:id="lblSaldo" style="-fx-font-size:12; -fx-font-weight:bold;"/>
             </HBox>
         </VBox>
     </top>
     <center>
         <TableView fx:id="tablaMovimientos">
             <columns>
-                <TableColumn fx:id="colFecha"       text="Fecha"       prefWidth="110"/>
+                <TableColumn fx:id="colFecha" text="Fecha" prefWidth="110"/>
                 <TableColumn fx:id="colDescripcion" text="Descripción" prefWidth="260"/>
-                <TableColumn fx:id="colMonto"       text="Monto"       prefWidth="120"/>
-                <TableColumn fx:id="colCuota"       text="Tipo"         prefWidth="90"/>
-                <TableColumn fx:id="colAcciones"    text="Acciones"    prefWidth="220"/>
+                <TableColumn fx:id="colMonto" text="Monto" prefWidth="120"/>
+                <TableColumn fx:id="colCuota" text="Tipo" prefWidth="90"/>
+                <TableColumn fx:id="colAcciones" text="Acciones" prefWidth="220"/>
             </columns>
         </TableView>
     </center>

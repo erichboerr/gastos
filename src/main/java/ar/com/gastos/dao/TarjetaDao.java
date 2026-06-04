@@ -11,7 +11,9 @@ public class TarjetaDao {
 
   // --- Consultas ---
 
-  /** Busca una tarjeta por nombre exacto solo entre las habilitadas */
+  /**
+   * Busca una tarjeta por nombre exacto solo entre las habilitadas
+   */
   public Tarjeta findByNombre(String nombre) throws SQLException {
     String sql = "SELECT id, nombre, tipo, habilitado FROM tarjeta WHERE UPPER(nombre) = ?";
     try (Connection c = Db.getDataSource().getConnection();
@@ -52,7 +54,9 @@ public class TarjetaDao {
     return null;
   }
 
-  /** Retorna todas las tarjetas activas */
+  /**
+   * Retorna todas las tarjetas activas
+   */
   public List<Tarjeta> findAllActivas() throws SQLException {
     List<Tarjeta> list = new ArrayList<>();
     String sql = "SELECT id, nombre, tipo, habilitado FROM tarjeta WHERE habilitado = TRUE";
@@ -89,7 +93,9 @@ public class TarjetaDao {
     return tipos;
   }
 
-  /** Retorna la primera tarjeta activa que coincide con el tipo dado */
+  /**
+   * Retorna la primera tarjeta activa que coincide con el tipo dado
+   */
   public Tarjeta findByTipo(String tipo) throws SQLException {
     String sql = "SELECT id, nombre, tipo, habilitado FROM tarjeta WHERE tipo = ? AND habilitado = TRUE LIMIT 1";
     try (Connection conn = Db.getDataSource().getConnection();
@@ -129,7 +135,9 @@ public class TarjetaDao {
 
   // --- Modificación ---
 
-  /** Actualiza nombre y tipo de una tarjeta existente */
+  /**
+   * Actualiza nombre y tipo de una tarjeta existente
+   */
   public void update(Tarjeta t) throws SQLException {
     String sql = "UPDATE tarjeta SET nombre=?, tipo=? WHERE id=?";
     try (Connection c = Db.getDataSource().getConnection();
@@ -143,7 +151,9 @@ public class TarjetaDao {
 
   // --- Baja / Reactivación ---
 
-  /** Baja soft: deshabilita la tarjeta sin eliminarla ni sus movimientos */
+  /**
+   * Baja soft: deshabilita la tarjeta sin eliminarla ni sus movimientos
+   */
   public void darDeBaja(int id) throws SQLException {
     String sql = "UPDATE tarjeta SET habilitado = FALSE WHERE id = ?";
     try (Connection c = Db.getDataSource().getConnection();

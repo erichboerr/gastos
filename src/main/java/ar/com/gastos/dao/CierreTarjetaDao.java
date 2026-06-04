@@ -85,15 +85,17 @@ public class CierreTarjetaDao {
   // Centralizado acá para no repetir la misma lógica en cada método.
   private CierreTarjeta mapRow(ResultSet rs) throws SQLException {
     return new CierreTarjeta(
-          rs.getInt("id_cierre"),
-          rs.getInt("id"),
-          rs.getDate("mes").toLocalDate(),
-          rs.getDate("fecha_cierre").toLocalDate(),
-          rs.getDate("fecha_vencimiento").toLocalDate()
+        rs.getInt("id_cierre"),
+        rs.getInt("id"),
+        rs.getDate("mes").toLocalDate(),
+        rs.getDate("fecha_cierre").toLocalDate(),
+        rs.getDate("fecha_vencimiento").toLocalDate()
     );
   }
 
-  /** Retorna todos los cierres de una tarjeta ordenados por mes DESC */
+  /**
+   * Retorna todos los cierres de una tarjeta ordenados por mes DESC
+   */
   public List<CierreTarjeta> findByTarjeta(int tarjetaId) throws SQLException {
     List<CierreTarjeta> lista = new ArrayList<>();
     String sql = "SELECT * FROM cierres_tarjeta WHERE id = ? ORDER BY mes DESC";
@@ -106,7 +108,9 @@ public class CierreTarjetaDao {
     return lista;
   }
 
-  /** Actualiza fecha de cierre y vencimiento de un cierre existente */
+  /**
+   * Actualiza fecha de cierre y vencimiento de un cierre existente
+   */
   public void update(CierreTarjeta c) throws SQLException {
     String sql = "UPDATE cierres_tarjeta SET mes=?, fecha_cierre=?, fecha_vencimiento=? WHERE id_cierre=?";
     try (Connection conn = Db.getDataSource().getConnection();
@@ -119,7 +123,9 @@ public class CierreTarjetaDao {
     }
   }
 
-  /** Elimina un cierre por su id_cierre */
+  /**
+   * Elimina un cierre por su id_cierre
+   */
   public void delete(int idCierre) throws SQLException {
     String sql = "DELETE FROM cierres_tarjeta WHERE id_cierre=?";
     try (Connection conn = Db.getDataSource().getConnection();
@@ -151,13 +157,15 @@ public class CierreTarjetaDao {
     return null;
   }
 
-  /** Retorna el cierre cuya fecha_cierre cae en el mes dado */
+  /**
+   * Retorna el cierre cuya fecha_cierre cae en el mes dado
+   */
   public CierreTarjeta findCierrePorMesDeCierre(int tarjetaId, YearMonth mes) throws SQLException {
     String sql = "SELECT * FROM cierres_tarjeta " +
-          "WHERE id = ? " +
-          "AND EXTRACT(YEAR FROM fecha_cierre) = ? " +
-          "AND EXTRACT(MONTH FROM fecha_cierre) = ? " +
-          "LIMIT 1";
+        "WHERE id = ? " +
+        "AND EXTRACT(YEAR FROM fecha_cierre) = ? " +
+        "AND EXTRACT(MONTH FROM fecha_cierre) = ? " +
+        "LIMIT 1";
     try (Connection conn = Db.getDataSource().getConnection();
          PreparedStatement ps = conn.prepareStatement(sql)) {
       System.out.println(tarjetaId);
@@ -191,13 +199,13 @@ public class CierreTarjetaDao {
   /**
    * Dado un movimiento con fecha de compra y un período (desde-hasta),
    * calcula qué número de cuota corresponde a ese período.
-   *
+   * <p>
    * Lógica: la cuota 1 está en el período donde cae la fecha de compra.
    * Cada período siguiente es la cuota siguiente.
    * Retorna -1 si la fecha de compra no cae en ningún período conocido.
    */
   public int calcularNroCuota(int tarjetaId, LocalDate fechaCompra, LocalDate desde, LocalDate hasta)
-        throws SQLException {
+      throws SQLException {
     List<CierreTarjeta> cierres = findAllPorTarjeta(tarjetaId);
 
     // Encontramos el índice del período donde cae la fecha de compra (cuota 1)
@@ -209,8 +217,8 @@ public class CierreTarjetaDao {
       CierreTarjeta anterior = i > 0 ? cierres.get(i - 1) : null;
 
       LocalDate periodoDesde = (anterior != null)
-            ? anterior.getFechaCierre().plusDays(1)
-            : cierre.getMes();
+          ? anterior.getFechaCierre().plusDays(1)
+          : cierre.getMes();
       LocalDate periodoHasta = cierre.getFechaCierre();
 
       // ¿La fecha de compra cae en este período? → cuota 1

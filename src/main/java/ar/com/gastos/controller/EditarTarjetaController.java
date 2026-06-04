@@ -19,8 +19,10 @@ public class EditarTarjetaController {
 
   private static final Logger logger = LoggerFactory.getLogger(EditarTarjetaController.class);
 
-  @FXML private TextField txtNombre;
-  @FXML private ComboBox<String> cmbTipo;
+  @FXML
+  private TextField txtNombre;
+  @FXML
+  private ComboBox<String> cmbTipo;
 
   // Tarjeta que se está editando — se setea desde DashboardController
   private Tarjeta tarjetaActual;
@@ -51,7 +53,7 @@ public class EditarTarjetaController {
   @FXML
   private void guardar() {
     String nombre = txtNombre.getText().trim();
-    String tipo   = cmbTipo.getEditor().getText().trim();
+    String tipo = cmbTipo.getEditor().getText().trim();
 
     if (nombre.isEmpty() || tipo.isEmpty()) {
       Toast.show(getStage(), "Nombre y tipo son obligatorios");

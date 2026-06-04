@@ -31,15 +31,24 @@ public class ResumenAnualController {
     CURRENCY.setMaximumFractionDigits(2);
   }
 
-  @FXML private Label lblAnio;
-  @FXML private TableView<FilaMes> tablaResumen;
-  @FXML private TableColumn<FilaMes, String>  colMes;
-  @FXML private TableColumn<FilaMes, String>  colIngresos;
-  @FXML private TableColumn<FilaMes, String>  colEgresos;
-  @FXML private TableColumn<FilaMes, String>  colBalance;
-  @FXML private Label lblTotalIngresos;
-  @FXML private Label lblTotalEgresos;
-  @FXML private Label lblTotalBalance;
+  @FXML
+  private Label lblAnio;
+  @FXML
+  private TableView<FilaMes> tablaResumen;
+  @FXML
+  private TableColumn<FilaMes, String> colMes;
+  @FXML
+  private TableColumn<FilaMes, String> colIngresos;
+  @FXML
+  private TableColumn<FilaMes, String> colEgresos;
+  @FXML
+  private TableColumn<FilaMes, String> colBalance;
+  @FXML
+  private Label lblTotalIngresos;
+  @FXML
+  private Label lblTotalEgresos;
+  @FXML
+  private Label lblTotalBalance;
 
   // Llamado desde DashboardController al abrir la ventana
   public void cargarAnio(int anio) {
@@ -53,17 +62,17 @@ public class ResumenAnualController {
     tablaResumen.getItems().clear();
 
     double sumaIngresos = 0;
-    double sumaEgresos  = 0;
+    double sumaEgresos = 0;
 
     try {
       IngresoDao ingresoDao = new IngresoDao();
       TarjetaDao tarjetaDao = new TarjetaDao();
       MovimientoDao movimientoDao = new MovimientoDao();
-      CierreTarjetaDao cierreDao  = new CierreTarjetaDao();
+      CierreTarjetaDao cierreDao = new CierreTarjetaDao();
       CuotaDao cuotaDao = new CuotaDao();
 
       List<Ingreso> todosLosIngresos = ingresoDao.listarIngresos();
-      List<Tarjeta> tarjetas         = tarjetaDao.findAllActivas();
+      List<Tarjeta> tarjetas = tarjetaDao.findAllActivas();
 
       // Iteramos los 12 meses del año
       for (Month month : Month.values()) {
@@ -71,11 +80,10 @@ public class ResumenAnualController {
 
         // Ingresos del mes
         double ingMes = todosLosIngresos.stream()
-              .filter(i -> YearMonth.from(i.getFecha()).equals(ym))
-              .map(Ingreso::getMonto)
-              .mapToDouble(BigDecimal::doubleValue)
-              .sum();
-
+            .filter(i -> YearMonth.from(i.getFecha()).equals(ym))
+            .map(Ingreso::getMonto)
+            .mapToDouble(BigDecimal::doubleValue)
+            .sum();
 
         // Egresos del mes (sumamos todas las tarjetas)
 
@@ -102,7 +110,7 @@ public class ResumenAnualController {
                 } else {
                   // Calculamos qué número de cuota corresponde a este período
                   int nroCuota = cierreDao.calcularNroCuota(
-                        t.getId(), m.getFecha(), desde, hasta);
+                      t.getId(), m.getFecha(), desde, hasta);
 
                   if (nroCuota >= 1 && nroCuota <= m.getCuotas()) {
                     List<Cuota> cuotas = cuotaDao.findByMovimiento(m.getId());
@@ -125,18 +133,18 @@ public class ResumenAnualController {
 
         double balMes = ingMes - egrMes;
         tablaResumen.getItems().add(new FilaMes(nombreMes,
-              CURRENCY.format(ingMes),
-              CURRENCY.format(egrMes),
-              CURRENCY.format(balMes)));
+            CURRENCY.format(ingMes),
+            CURRENCY.format(egrMes),
+            CURRENCY.format(balMes)));
 
         sumaIngresos += ingMes;
-        sumaEgresos  += egrMes;
+        sumaEgresos += egrMes;
       }
 
       // Totales al pie de la tabla
       lblTotalIngresos.setText("Total ingresos: " + CURRENCY.format(sumaIngresos));
-      lblTotalEgresos.setText("Total egresos: "   + CURRENCY.format(sumaEgresos));
-      lblTotalBalance.setText("Balance anual: "   + CURRENCY.format(sumaIngresos - sumaEgresos));
+      lblTotalEgresos.setText("Total egresos: " + CURRENCY.format(sumaEgresos));
+      lblTotalBalance.setText("Balance anual: " + CURRENCY.format(sumaIngresos - sumaEgresos));
 
     } catch (Exception ex) {
       logger.error("Error al cargar resumen anual", ex);
@@ -152,15 +160,26 @@ public class ResumenAnualController {
     private final String balance;
 
     public FilaMes(String mes, String ingresos, String egresos, String balance) {
-      this.mes      = mes;
+      this.mes = mes;
       this.ingresos = ingresos;
-      this.egresos  = egresos;
-      this.balance  = balance;
+      this.egresos = egresos;
+      this.balance = balance;
     }
 
-    public String getMes()      { return mes; }
-    public String getIngresos() { return ingresos; }
-    public String getEgresos()  { return egresos; }
-    public String getBalance()  { return balance; }
+    public String getMes() {
+      return mes;
+    }
+
+    public String getIngresos() {
+      return ingresos;
+    }
+
+    public String getEgresos() {
+      return egresos;
+    }
+
+    public String getBalance() {
+      return balance;
+    }
   }
 }

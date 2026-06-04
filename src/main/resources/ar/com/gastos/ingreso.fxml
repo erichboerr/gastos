@@ -29,7 +29,6 @@
         <Button text="Cerrar" onAction="#cerrar"
                 HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
     </HBox>
-
     <Separator/>
 
     <!-- Navegación por mes -->
@@ -46,11 +45,10 @@
     <!-- Lista de ingresos del mes -->
     <TableView fx:id="tablaIngresos" prefHeight="250" maxWidth="Infinity">
         <columns>
-            <TableColumn fx:id="colFecha"    text="Fecha"    prefWidth="110"/>
-            <TableColumn fx:id="colTipo"     text="Tipo"     prefWidth="160"/>
-            <TableColumn fx:id="colMonto"    text="Monto"    prefWidth="130"/>
+            <TableColumn fx:id="colFecha" text="Fecha" prefWidth="110"/>
+            <TableColumn fx:id="colTipo" text="Tipo" prefWidth="160"/>
+            <TableColumn fx:id="colMonto" text="Monto" prefWidth="130"/>
             <TableColumn fx:id="colAcciones" text="Acciones" prefWidth="170"/>
         </columns>
     </TableView>
-
 </VBox>

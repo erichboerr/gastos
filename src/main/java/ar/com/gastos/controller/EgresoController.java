@@ -12,6 +12,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,225 +26,300 @@ import java.util.stream.Collectors;
 
 public class EgresoController {
 
-    private static final Logger logger = LoggerFactory.getLogger(EgresoController.class);
+  private static final Logger logger = LoggerFactory.getLogger(EgresoController.class);
 
-    @FXML private ComboBox<String>   cmbTarjeta;
-    @FXML private ComboBox<Comercio> cmbDescripcion;
-    @FXML private DatePicker         txtFecha;
-    @FXML private TextField          txtMonto;
-    @FXML private TextField          txtCuotas;
+  @FXML
+  private ComboBox<String> cmbTarjeta;
+  @FXML
+  private DatePicker txtFecha;
+  @FXML
+  private Label lblComercio;
+  @FXML
+  private HBox hboxComercio;
+  @FXML
+  private ComboBox<Comercio> cmbDescripcion;
+  @FXML
+  private Label lblDescripcion;
+  @FXML
+  private TextField txtDescripcion;
+  @FXML
+  private TextField txtMonto;
+  @FXML
+  private Label lblCuotas;
+  @FXML
+  private TextField txtCuotas;
 
-    // Lista completa de comercios — usada como base para el filtro
-    private ObservableList<Comercio> todosLosComercios = FXCollections.observableArrayList();
+  // Lista completa de comercios para el filtro
+  private final ObservableList<Comercio> todosLosComercios = FXCollections.observableArrayList();
 
-    @FXML
-    public void initialize() {
-        cargarTarjetas();
+  // Tarjeta actualmente seleccionada
+  private Tarjeta tarjetaSeleccionada = null;
+
+  @FXML
+  public void initialize() {
+    cargarTarjetas();
+    cargarComercios();
+    configurarFiltroComercios();
+    // Por defecto ocultamos todos los campos específicos
+    mostrarCamposDebito(false);
+    mostrarCamposCredito(false);
+  }
+
+  // --- Al seleccionar tarjeta mostramos los campos correspondientes ---
+
+  @FXML
+  private void onTarjetaSeleccionada() {
+    String nombre = cmbTarjeta.getValue();
+    if (nombre == null) return;
+    try {
+      TarjetaDao dao = new TarjetaDao();
+      tarjetaSeleccionada = dao.findByNombre(nombre);
+      if (tarjetaSeleccionada == null) return;
+
+      boolean esDebito = "DEBITO".equals(tarjetaSeleccionada.getTipo());
+      mostrarCamposDebito(esDebito);
+      mostrarCamposCredito(!esDebito);
+      limpiarCampos();
+    } catch (SQLException ex) {
+      logger.error("Error al cargar tarjeta", ex);
+    }
+  }
+
+  private void mostrarCamposDebito(boolean visible) {
+    lblDescripcion.setVisible(visible);
+    lblDescripcion.setManaged(visible);
+    txtDescripcion.setVisible(visible);
+    txtDescripcion.setManaged(visible);
+  }
+
+  private void mostrarCamposCredito(boolean visible) {
+    lblComercio.setVisible(visible);
+    lblComercio.setManaged(visible);
+    hboxComercio.setVisible(visible);
+    hboxComercio.setManaged(visible);
+    lblCuotas.setVisible(visible);
+    lblCuotas.setManaged(visible);
+    txtCuotas.setVisible(visible);
+    txtCuotas.setManaged(visible);
+  }
+
+  // --- Carga tarjetas ---
+
+  private void cargarTarjetas() {
+    try {
+      TarjetaDao dao = new TarjetaDao();
+      List<Tarjeta> tarjetas = dao.findAllActivas();
+      cmbTarjeta.getItems().clear();
+      for (Tarjeta t : tarjetas) {
+        cmbTarjeta.getItems().add(t.getNombre());
+      }
+    } catch (Exception e) {
+      logger.error("Error al cargar tarjetas", e);
+    }
+  }
+
+  // --- Carga comercios ---
+
+  private void cargarComercios() {
+    try {
+      ComercioDao dao = new ComercioDao();
+      List<Comercio> comercios = dao.findAllActivos();
+      todosLosComercios.setAll(comercios);
+      cmbDescripcion.setItems(FXCollections.observableArrayList(comercios));
+    } catch (Exception e) {
+      logger.error("Error al cargar comercios", e);
+    }
+  }
+
+  // --- Filtro automático en el ComboBox de comercios ---
+
+  private void configurarFiltroComercios() {
+    cmbDescripcion.setEditable(true);
+    cmbDescripcion.getEditor().textProperty().addListener((obs, anterior, nuevo) -> {
+      Comercio seleccionado = cmbDescripcion.getValue();
+      if (seleccionado != null && seleccionado.getNombre().equalsIgnoreCase(nuevo)) return;
+
+      String filtro = nuevo == null ? "" : nuevo.toUpperCase().trim();
+      if (filtro.isEmpty()) {
+        cmbDescripcion.setItems(FXCollections.observableArrayList(todosLosComercios));
+      } else {
+        List<Comercio> filtrados = todosLosComercios.stream()
+            .filter(c -> c.getNombre().toUpperCase().contains(filtro))
+            .collect(Collectors.toList());
+        cmbDescripcion.setItems(FXCollections.observableArrayList(filtrados));
+      }
+      if (!cmbDescripcion.isShowing()) cmbDescripcion.show();
+    });
+  }
+
+  // --- Nuevo comercio on the fly ---
+
+  @FXML
+  private void nuevaDescripcion() {
+    String textoActual = cmbDescripcion.getEditor().getText().toUpperCase().trim();
+    TextInputDialog dialog = new TextInputDialog(textoActual);
+    dialog.setTitle("Nuevo comercio");
+    dialog.setHeaderText(null);
+    dialog.setContentText("Nombre del comercio:");
+
+    Optional<String> resultado = dialog.showAndWait();
+    resultado.ifPresent(texto -> {
+      String nombre = texto.toUpperCase().trim();
+      if (nombre.isEmpty()) return;
+      try {
+        ComercioDao dao = new ComercioDao();
+        Comercio existente = dao.findByNombre(nombre);
+        if (existente != null) {
+          cmbDescripcion.setValue(existente);
+          return;
+        }
+        dao.save(new Comercio(nombre, null));
         cargarComercios();
-        configurarFiltroComercios();
+        cmbDescripcion.getItems().stream()
+            .filter(c -> c.getNombre().equals(nombre))
+            .findFirst()
+            .ifPresent(cmbDescripcion::setValue);
+        logger.info("Comercio creado: {}", nombre);
+      } catch (SQLException ex) {
+        logger.error("Error al crear comercio", ex);
+      }
+    });
+  }
+
+  // --- Guardar movimiento ---
+
+  @FXML
+  private void guardarMovimiento() {
+    if (tarjetaSeleccionada == null) {
+      Toast.show(getStage(), "Debe seleccionar una tarjeta");
+      return;
     }
 
-    // Carga las tarjetas activas en el ComboBox
-    private void cargarTarjetas() {
-        try {
-            TarjetaDao dao = new TarjetaDao();
-            List<Tarjeta> tarjetas = dao.findAllActivas();
-            cmbTarjeta.getItems().clear();
-            for (Tarjeta t : tarjetas) {
-                cmbTarjeta.getItems().add(t.getNombre());
-            }
-        } catch (Exception e) {
-            logger.error("Error al cargar tarjetas", e);
-        }
+    LocalDate fecha = txtFecha.getValue();
+    if (fecha == null) {
+      Toast.show(getStage(), "Debe seleccionar una fecha");
+      return;
     }
 
-    // Carga el catálogo completo de comercios habilitados
-    private void cargarComercios() {
-        try {
-            ComercioDao dao = new ComercioDao();
-            List<Comercio> comercios = dao.findAllActivos();
-            todosLosComercios.setAll(comercios);
-            cmbDescripcion.setItems(FXCollections.observableArrayList(comercios));
-        } catch (Exception e) {
-            logger.error("Error al cargar comercios", e);
-        }
+    String montoStr = txtMonto.getText().trim();
+    if (montoStr.isEmpty()) {
+      Toast.show(getStage(), "Debe ingresar un monto");
+      return;
     }
 
-    /**
-     * Configura el filtro automático del ComboBox mientras el usuario escribe.
-     * Cada vez que cambia el texto del editor, filtramos la lista de comercios
-     * mostrando solo los que contienen el texto ingresado.
-     */
-    private void configurarFiltroComercios() {
-        cmbDescripcion.setEditable(true);
+    try {
+      BigDecimal monto = new BigDecimal(montoStr).setScale(2);
+      boolean esDebito = "DEBITO".equals(tarjetaSeleccionada.getTipo());
 
-        cmbDescripcion.getEditor().textProperty().addListener((obs, anterior, nuevo) -> {
-            // Si el texto cambió porque el usuario seleccionó un item, no filtramos
-            Comercio seleccionado = cmbDescripcion.getValue();
-            if (seleccionado != null && seleccionado.getNombre().equalsIgnoreCase(nuevo)) return;
+      if (esDebito) {
+        saveDebito(tarjetaSeleccionada, fecha, monto);
+      } else {
+        saveCredito(tarjetaSeleccionada, fecha, monto);
+      }
 
-            String filtro = nuevo == null ? "" : nuevo.toUpperCase().trim();
+      limpiar();
+      Toast.show(getStage(), "Egreso guardado en " + tarjetaSeleccionada.getNombre());
+      MovimientoEventBus.publish(tarjetaSeleccionada.getNombre());
 
-            if (filtro.isEmpty()) {
-                // Sin texto — mostramos todos
-                cmbDescripcion.setItems(FXCollections.observableArrayList(todosLosComercios));
-            } else {
-                // Filtramos los que contienen el texto en cualquier posición
-                List<Comercio> filtrados = todosLosComercios.stream()
-                    .filter(c -> c.getNombre().toUpperCase().contains(filtro))
-                    .collect(Collectors.toList());
-                cmbDescripcion.setItems(FXCollections.observableArrayList(filtrados));
-            }
+    } catch (NumberFormatException ex) {
+      Toast.show(getStage(), "Monto inválido");
+    } catch (SQLException ex) {
+      Toast.show(getStage(), "Error al guardar egreso");
+      logger.error("Error al guardar egreso", ex);
+    }
+  }
 
-            // Mostramos el popup con los resultados filtrados
-            if (!cmbDescripcion.isShowing()) {
-                cmbDescripcion.show();
-            }
-        });
+  /**
+   * Guarda un egreso en tarjeta DÉBITO.
+   * Sin comercio_id, con descripción libre, siempre cuota única.
+   */
+  private void saveDebito(Tarjeta tarjeta, LocalDate fecha, BigDecimal monto)
+      throws SQLException {
+    String descripcion = txtDescripcion.getText().toUpperCase().trim();
+    if (descripcion.isEmpty()) {
+      Toast.show(getStage(), "Debe ingresar una descripción");
+      throw new IllegalArgumentException("Descripción vacía");
     }
 
-    // Abre diálogo para crear un comercio nuevo en el momento
-    @FXML
-    private void nuevaDescripcion() {
-        // Tomamos el texto que ya escribió el usuario como valor inicial del diálogo
-        String textoActual = cmbDescripcion.getEditor().getText().toUpperCase().trim();
+    Movimiento mov = new Movimiento(
+        tarjeta.getId(),
+        fecha,
+        descripcion,
+        monto,
+        "EGRESO",
+        "ARS"
+    );
+    new MovimientoDao().save(mov);
+    logger.info("Egreso DÉBITO guardado: {} - ${} - {}", descripcion, monto, fecha);
+  }
 
-        TextInputDialog dialog = new TextInputDialog(textoActual);
-        dialog.setTitle("Nuevo comercio");
-        dialog.setHeaderText(null);
-        dialog.setContentText("Nombre del comercio:");
-
-        Optional<String> resultado = dialog.showAndWait();
-        resultado.ifPresent(texto -> {
-            String nombre = texto.toUpperCase().trim();
-            if (nombre.isEmpty()) return;
-
-            try {
-                ComercioDao dao = new ComercioDao();
-
-                Comercio existente = dao.findByNombre(nombre);
-                if (existente != null) {
-                    cmbDescripcion.setValue(existente);
-                    return;
-                }
-
-                Comercio nuevo = new Comercio(nombre, null);
-                dao.save(nuevo);
-
-                cargarComercios();
-
-                // Seleccionamos el recién creado
-                cmbDescripcion.getItems().stream()
-                    .filter(c -> c.getNombre().equals(nombre))
-                    .findFirst()
-                    .ifPresent(cmbDescripcion::setValue);
-
-                logger.info("Comercio creado: {}", nombre);
-
-            } catch (SQLException ex) {
-                logger.error("Error al crear comercio", ex);
-            }
-        });
-    }
-
-    @FXML
-    private void guardarMovimiento() {
-        String tarjetaNombre = cmbTarjeta.getValue();
-        if (tarjetaNombre == null || tarjetaNombre.isEmpty()) {
-            Toast.show(getStage(), "Debe seleccionar una tarjeta");
-            return;
-        }
-
-        Comercio comercio = null;
-        Object valor = cmbDescripcion.getValue();
-        if (valor instanceof Comercio) {
-            comercio = (Comercio) valor;
-        } else if (valor instanceof String) {
-            String nombre = ((String) valor).toUpperCase().trim();
-            if (!nombre.isEmpty()) {
-                try {
-                    ComercioDao dao = new ComercioDao();
-                    comercio = dao.findByNombre(nombre);
-                    if (comercio == null) {
-                        Comercio nuevo = new Comercio(nombre, null);
-                        dao.save(nuevo);
-                        cargarComercios();
-                        comercio = dao.findByNombre(nombre);
-                    }
-                } catch (SQLException ex) {
-                    logger.error("Error al buscar/crear comercio", ex);
-                }
-            }
-        }
-
+  /**
+   * Guarda un egreso en tarjeta CRÉDITO.
+   * Con comercio_id, sin descripción libre, con cuotas.
+   */
+  private void saveCredito(Tarjeta tarjeta, LocalDate fecha, BigDecimal monto)
+      throws SQLException {
+    // Resolvemos el comercio
+    Comercio comercio = null;
+    Object valor = cmbDescripcion.getValue();
+    if (valor instanceof Comercio) {
+      comercio = (Comercio) valor;
+    } else if (valor instanceof String) {
+      String nombre = ((String) valor).toUpperCase().trim();
+      if (!nombre.isEmpty()) {
+        ComercioDao dao = new ComercioDao();
+        comercio = dao.findByNombre(nombre);
         if (comercio == null) {
-            Toast.show(getStage(), "Debe seleccionar o ingresar un comercio");
-            return;
+          dao.save(new Comercio(nombre, null));
+          cargarComercios();
+          comercio = dao.findByNombre(nombre);
         }
-
-        LocalDate fecha = txtFecha.getValue();
-        if (fecha == null) {
-            Toast.show(getStage(), "Debe seleccionar una fecha");
-            return;
-        }
-
-        try {
-            TarjetaDao tarjetaDao = new TarjetaDao();
-            Tarjeta tarjeta = tarjetaDao.findByNombre(tarjetaNombre);
-            if (tarjeta == null) {
-                Toast.show(getStage(), "Tarjeta no encontrada");
-                return;
-            }
-
-            BigDecimal monto = new BigDecimal(txtMonto.getText()).setScale(2);
-            int cuotas = txtCuotas.getText().isEmpty() ? 1 : Integer.parseInt(txtCuotas.getText());
-
-            Movimiento movimiento = new Movimiento(
-                tarjeta.getId(),
-                comercio.getId(),
-                fecha,
-                monto,
-                "ARS",
-                cuotas
-            );
-
-            new MovimientoDao().save(movimiento);
-
-            // Reseteamos el ComboBox para la próxima carga
-            cmbDescripcion.getEditor().clear();
-            cmbDescripcion.setValue(null);
-            cargarComercios();
-
-            limpiar();
-            Toast.show(getStage(), "Egreso guardado en " + tarjetaNombre + " por $" + monto);
-            MovimientoEventBus.publish(tarjetaNombre);
-            logger.info("Egreso guardado: {} en {} por ${}", comercio.getNombre(), tarjetaNombre, monto);
-
-        } catch (SQLException ex) {
-            Toast.show(getStage(), "Error al guardar egreso");
-            logger.error("Error al guardar egreso", ex);
-        } catch (NumberFormatException ex) {
-            Toast.show(getStage(), "Monto/cuotas inválido");
-            logger.error("Error en formato de monto/cuotas", ex);
-        }
+      }
     }
 
-    // --- Limpia el formulario para cargar otro egreso ---
-    private void limpiar() {
-        cmbDescripcion.getEditor().clear();
-        cmbDescripcion.setValue(null);
-        txtMonto.clear();
-        txtCuotas.clear();
-        txtFecha.setValue(null);
-        cargarComercios();
+    if (comercio == null) {
+      Toast.show(getStage(), "Debe seleccionar o ingresar un comercio");
+      throw new IllegalArgumentException("Comercio vacío");
     }
 
-    @FXML
-    private void cerrar() {
-        getStage().close();
-    }
+    int cuotas = txtCuotas.getText().isEmpty() ? 1 : Integer.parseInt(txtCuotas.getText());
 
-    private Stage getStage() {
-        return (Stage) cmbTarjeta.getScene().getWindow();
-    }
+    Movimiento mov = new Movimiento(
+        tarjeta.getId(),
+        comercio.getId(),
+        fecha,
+        monto,
+        "ARS",
+        cuotas
+    );
+    new MovimientoDao().save(mov);
+    logger.info("Egreso CRÉDITO guardado: {} en {} - ${} - {} cuotas",
+        comercio.getNombre(), tarjeta.getNombre(), monto, cuotas);
+  }
+
+  // --- Limpia el formulario ---
+
+  private void limpiarCampos() {
+    txtDescripcion.clear();
+    cmbDescripcion.getEditor().clear();
+    cmbDescripcion.setValue(null);
+    txtMonto.clear();
+    txtCuotas.clear();
+    txtFecha.setValue(null);
+  }
+
+  @FXML
+  private void limpiar() {
+    limpiarCampos();
+    cargarComercios();
+  }
+
+  @FXML
+  private void cerrar() {
+    getStage().close();
+  }
+
+  private Stage getStage() {
+    return (Stage) cmbTarjeta.getScene().getWindow();
+  }
 }

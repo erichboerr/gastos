@@ -40,8 +40,8 @@ public class Tarjeta {
     this.nombre = nombre;
     this.tipo = tipo;
     this.totalGastado = totalGastado;
-    this.totalPagado = totalPagado;      // ← esto faltaba
-    this.restaAbonar = restaAbonar;      // ← esto faltaba
+    this.totalPagado = totalPagado;
+    this.restaAbonar = restaAbonar;
   }
 
 

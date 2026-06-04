@@ -35,10 +35,10 @@
     <Label text="Comercios registrados"/>
     <TableView fx:id="tablaComercio" prefHeight="300" maxWidth="Infinity">
         <columns>
-            <TableColumn fx:id="colNombre"    text="Nombre"    prefWidth="220"/>
+            <TableColumn fx:id="colNombre" text="Nombre" prefWidth="220"/>
             <TableColumn fx:id="colCategoria" text="Categoría" prefWidth="150"/>
-            <TableColumn fx:id="colEstado"    text="Estado"    prefWidth="80"/>
-            <TableColumn fx:id="colAcciones"  text="Acciones"  prefWidth="170"/>
+            <TableColumn fx:id="colEstado" text="Estado" prefWidth="80"/>
+            <TableColumn fx:id="colAcciones" text="Acciones" prefWidth="170"/>
         </columns>
     </TableView>
 

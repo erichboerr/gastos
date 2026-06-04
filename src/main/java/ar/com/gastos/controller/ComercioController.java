@@ -19,13 +19,20 @@ public class ComercioController {
 
   private static final Logger logger = LoggerFactory.getLogger(ComercioController.class);
 
-  @FXML private TextField          txtNombre;
-  @FXML private ComboBox<String>   cmbCategoria;
-  @FXML private TableView<Comercio> tablaComercio;
-  @FXML private TableColumn<Comercio, String>  colNombre;
-  @FXML private TableColumn<Comercio, String>  colCategoria;
-  @FXML private TableColumn<Comercio, String>  colEstado;
-  @FXML private TableColumn<Comercio, Void>    colAcciones;
+  @FXML
+  private TextField txtNombre;
+  @FXML
+  private ComboBox<String> cmbCategoria;
+  @FXML
+  private TableView<Comercio> tablaComercio;
+  @FXML
+  private TableColumn<Comercio, String> colNombre;
+  @FXML
+  private TableColumn<Comercio, String> colCategoria;
+  @FXML
+  private TableColumn<Comercio, String> colEstado;
+  @FXML
+  private TableColumn<Comercio, Void> colAcciones;
 
   // -1 = modo alta, >0 = modo edición
   private int idEditando = -1;
@@ -66,9 +73,9 @@ public class ComercioController {
 
     // Columna acciones — Editar + Dar de baja / Reactivar
     colAcciones.setCellFactory(col -> new TableCell<>() {
-      private final Button btnEditar    = new Button("Editar");
-      private final Button btnToggle    = new Button();
-      private final HBox   hbox         = new HBox(6, btnEditar, btnToggle);
+      private final Button btnEditar = new Button("Editar");
+      private final Button btnToggle = new Button();
+      private final HBox hbox = new HBox(6, btnEditar, btnToggle);
 
       {
         btnEditar.setStyle("-fx-background-color:#2c3e50; -fx-text-fill:white; -fx-font-size:11;");
@@ -133,7 +140,7 @@ public class ComercioController {
 
   @FXML
   private void guardar() {
-    String nombre    = txtNombre.getText().toUpperCase().trim();
+    String nombre = txtNombre.getText().toUpperCase().trim();
     String categoria = cmbCategoria.getEditor().getText().toUpperCase().trim();
 
     if (nombre.isEmpty()) {

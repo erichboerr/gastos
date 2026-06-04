@@ -13,7 +13,8 @@ public class GastoRecurrente {
 
   // --- Constructores ---
 
-  public GastoRecurrente() {}
+  public GastoRecurrente() {
+  }
 
   public GastoRecurrente(String descripcion, String categoria, String medioPago) {
     this.descripcion = descripcion;
@@ -23,19 +24,41 @@ public class GastoRecurrente {
 
   // --- Getters y Setters ---
 
-  public int getId() { return id; }
-  public void setId(int id) { this.id = id; }
+  public int getId() {
+    return id;
+  }
 
-  public String getDescripcion() { return descripcion; }
-  public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+  public void setId(int id) {
+    this.id = id;
+  }
 
-  public String getCategoria() { return categoria; }
-  public void setCategoria(String categoria) { this.categoria = categoria; }
+  public String getDescripcion() {
+    return descripcion;
+  }
 
-  public String getMedioPago() { return medioPago; }
-  public void setMedioPago(String medioPago) { this.medioPago = medioPago; }
+  public void setDescripcion(String descripcion) {
+    this.descripcion = descripcion;
+  }
+
+  public String getCategoria() {
+    return categoria;
+  }
+
+  public void setCategoria(String categoria) {
+    this.categoria = categoria;
+  }
+
+  public String getMedioPago() {
+    return medioPago;
+  }
+
+  public void setMedioPago(String medioPago) {
+    this.medioPago = medioPago;
+  }
 
   // Usado por ComboBox y ListView para mostrar el nombre directamente
   @Override
-  public String toString() { return descripcion; }
+  public String toString() {
+    return descripcion;
+  }
 }

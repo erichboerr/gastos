@@ -5,7 +5,8 @@
 
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="ar.com.gastos.controller.EditarMovimientoController"
-      spacing="12" alignment="TOP_CENTER" style="-fx-padding:20;">
+      spacing="10" alignment="TOP_CENTER" style="-fx-padding:20;"
+      prefWidth="400" prefHeight="420">
 
     <Label text="Editar Movimiento"
            style="-fx-font-size:16; -fx-font-weight:bold; -fx-text-fill:#2c3e50;"/>

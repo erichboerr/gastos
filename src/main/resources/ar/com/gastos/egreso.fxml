@@ -6,7 +6,7 @@
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="ar.com.gastos.controller.EgresoController"
       spacing="10" alignment="TOP_CENTER" style="-fx-padding:20;"
-      prefWidth="400">
+      prefWidth="400" prefHeight="350">
 
     <Label text="Nuevo Egreso"
            style="-fx-font-size:16; -fx-font-weight:bold; -fx-text-fill:#2c3e50;"/>
@@ -14,13 +14,15 @@
     <Separator/>
 
     <Label text="Tarjeta"/>
-    <ComboBox fx:id="cmbTarjeta" promptText="Seleccione tarjeta" maxWidth="Infinity"/>
+    <ComboBox fx:id="cmbTarjeta" promptText="Seleccione tarjeta"
+              onAction="#onTarjetaSeleccionada" maxWidth="Infinity"/>
 
     <Label text="Fecha"/>
     <DatePicker fx:id="txtFecha" maxWidth="Infinity"/>
 
-    <Label text="Comercio"/>
-    <HBox spacing="8" alignment="CENTER_LEFT">
+    <!-- Para CRÉDITO: ComboBox de comercios -->
+    <Label fx:id="lblComercio" text="Comercio"/>
+    <HBox fx:id="hboxComercio" spacing="8" alignment="CENTER_LEFT">
         <ComboBox fx:id="cmbDescripcion"
                   promptText="Seleccione o escriba comercio"
                   HBox.hgrow="ALWAYS"
@@ -28,10 +30,16 @@
         <Button text="+ Nuevo" onAction="#nuevaDescripcion"/>
     </HBox>
 
+    <!-- Para DÉBITO: descripción libre -->
+    <Label fx:id="lblDescripcion" text="Descripción"/>
+    <TextField fx:id="txtDescripcion" promptText="Ej: SUPERMERCADO, COMBUSTIBLE"
+               maxWidth="Infinity"/>
+
     <Label text="Monto"/>
     <TextField fx:id="txtMonto" promptText="0.00" maxWidth="Infinity"/>
 
-    <Label text="Cuotas (dejar vacío = 1)"/>
+    <!-- Cuotas solo para crédito -->
+    <Label fx:id="lblCuotas" text="Cuotas (dejar vacío = 1)"/>
     <TextField fx:id="txtCuotas" promptText="1" maxWidth="Infinity"/>
 
     <Separator/>

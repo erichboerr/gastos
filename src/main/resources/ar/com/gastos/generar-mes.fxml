@@ -29,5 +29,4 @@
         <Button text="Cerrar" onAction="#cerrar"
                 HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
     </HBox>
-
 </VBox>

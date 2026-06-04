@@ -20,8 +20,10 @@ public class NuevaTarjetaController {
 
   private static final Logger logger = LoggerFactory.getLogger(NuevaTarjetaController.class);
 
-  @FXML private TextField txtNombre;
-  @FXML private ComboBox<String> cmbTipo;
+  @FXML
+  private TextField txtNombre;
+  @FXML
+  private ComboBox<String> cmbTipo;
 
   @FXML
   public void initialize() {
@@ -92,7 +94,7 @@ public class NuevaTarjetaController {
             + "¿Querés crear una nueva de todas formas o activar la existente?";
 
         // Botones personalizados
-        ButtonType btnCrear   = new ButtonType("Crear nueva");
+        ButtonType btnCrear = new ButtonType("Crear nueva");
         ButtonType btnActivar = new ButtonType("Activar existente");
         ButtonType btnCancelar = new ButtonType("Cancelar", ButtonBar.ButtonData.CANCEL_CLOSE);
 

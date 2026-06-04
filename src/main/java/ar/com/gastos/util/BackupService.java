@@ -34,9 +34,9 @@ public class BackupService {
     // Leemos la configuración
     Properties props = cargarProperties();
     String backupDir = props.getProperty("backup.dir");
-    String dbUrl     = props.getProperty("db.url");
-    String dbUser    = props.getProperty("db.user");
-    String dbPass    = props.getProperty("db.password");
+    String dbUrl = props.getProperty("db.url");
+    String dbUser = props.getProperty("db.user");
+    String dbPass = props.getProperty("db.password");
 
     if (backupDir == null || backupDir.isBlank()) {
       throw new Exception("No está configurada la carpeta de backup (backup.dir) en config.properties");
@@ -53,7 +53,7 @@ public class BackupService {
     }
 
     // Nombre del archivo — un backup por día, se reemplaza si ya existe
-    String fecha    = LocalDate.now().format(DATE_FMT);
+    String fecha = LocalDate.now().format(DATE_FMT);
     String fileName = "gastos_backup_" + fecha + ".sql";
     String filePath = backupDir + File.separator + fileName;
 
@@ -78,7 +78,7 @@ public class BackupService {
 
     // Capturamos la salida por si hay errores
     String output = new String(process.getInputStream().readAllBytes());
-    int exitCode  = process.waitFor();
+    int exitCode = process.waitFor();
 
     if (exitCode != 0) {
       logger.error("pg_dump falló con código {}: {}", exitCode, output);
@@ -109,7 +109,7 @@ public class BackupService {
   public static void restaurarBackup(String filePath) throws Exception {
 
     Properties props = cargarProperties();
-    String dbUrl  = props.getProperty("db.url");
+    String dbUrl = props.getProperty("db.url");
     String dbUser = props.getProperty("db.user");
     String dbPass = props.getProperty("db.password");
     String dbName = dbUrl.substring(dbUrl.lastIndexOf("/") + 1);
@@ -137,7 +137,7 @@ public class BackupService {
     Process process = pb.start();
 
     String output = new String(process.getInputStream().readAllBytes());
-    int exitCode  = process.waitFor();
+    int exitCode = process.waitFor();
 
     if (exitCode != 0) {
       logger.error("psql falló con código {}: {}", exitCode, output);

@@ -172,11 +172,6 @@ public class CierreTarjetaController {
       return;
     }
 
-    if (tarjetaNombre == null || mes == null || cierre == null || vencimiento == null) {
-      Toast.show(getStage(), "Debe completar todos los campos");
-      return;
-    }
-
 // Validación: el cierre no puede ser anterior al mes seleccionado
     if (cierre.isBefore(mes)) {
       Toast.show(getStage(), "La fecha de cierre no puede ser anterior al mes seleccionado");

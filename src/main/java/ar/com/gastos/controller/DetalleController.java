@@ -7,7 +7,6 @@ import ar.com.gastos.model.CierreTarjeta;
 import ar.com.gastos.model.Cuota;
 import ar.com.gastos.model.Movimiento;
 import ar.com.gastos.model.Tarjeta;
-import ar.com.gastos.util.BackupService;
 import ar.com.gastos.util.MovimientoEventBus;
 import ar.com.gastos.util.Toast;
 import javafx.application.Platform;
@@ -70,7 +69,7 @@ public class DetalleController {
   private YearMonth mesVisible = YearMonth.now();
 
   private static final NumberFormat CURRENCY =
-      NumberFormat.getCurrencyInstance(new Locale("es", "AR"));
+      NumberFormat.getCurrencyInstance(Locale.of("es", "AR"));
 
   static {
     CURRENCY.setMaximumFractionDigits(2);
@@ -115,9 +114,9 @@ public class DetalleController {
 
     // Formato de monto en pesos
     colAcciones.setCellFactory(col -> new TableCell<>() {
-      private final Button btnEditar   = new Button("Editar");
+      private final Button btnEditar = new Button("Editar");
       private final Button btnEliminar = new Button("Eliminar");
-      private final Button btnPagar    = new Button("Pagar");
+      private final Button btnPagar = new Button("Pagar");
 
       {
         btnEditar.setStyle("-fx-background-color:#2c3e50; -fx-text-fill:white; -fx-font-size:11;");
@@ -196,7 +195,7 @@ public class DetalleController {
 
     // Actualizamos el label del mes — ej.: "Mayo 2026"
     String nombreMes = mesVisible.getMonth()
-        .getDisplayName(TextStyle.FULL, new Locale("es"));
+        .getDisplayName(TextStyle.FULL, Locale.of("es"));
     nombreMes = nombreMes.substring(0, 1).toUpperCase() + nombreMes.substring(1);
     lblMes.setText(nombreMes + " " + mesVisible.getYear());
 
@@ -244,7 +243,7 @@ public class DetalleController {
             movimientosFiltrados.add(m);
           } else {
             int nroCuota = cierreDao.calcularNroCuota(
-                  tarjetaActual.getId(), m.getFecha(), desde, hasta);
+                tarjetaActual.getId(), m.getFecha(), desde, hasta);
 
             if (nroCuota >= 1 && nroCuota <= m.getCuotas()) {
               List<Cuota> cuotas = cuotaDao.findByMovimiento(m.getId());
@@ -334,7 +333,7 @@ public class DetalleController {
     dialog.getDialogPane().setContent(contenido);
 
     ButtonType btnConfirmar = new ButtonType("Confirmar", ButtonBar.ButtonData.OK_DONE);
-    ButtonType btnCancelar  = new ButtonType("Cancelar",  ButtonBar.ButtonData.CANCEL_CLOSE);
+    ButtonType btnCancelar = new ButtonType("Cancelar", ButtonBar.ButtonData.CANCEL_CLOSE);
     dialog.getDialogPane().getButtonTypes().addAll(btnConfirmar, btnCancelar);
 
     dialog.showAndWait().ifPresent(respuesta -> {
