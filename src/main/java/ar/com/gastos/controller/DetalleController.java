@@ -149,10 +149,11 @@ public class DetalleController {
         Movimiento m = getTableView().getItems().get(getIndex());
         boolean esDebito = tarjetaActual != null && "DEBITO".equals(tarjetaActual.getTipo());
         boolean esEgreso = "EGRESO".equals(m.getCategoria());
+        boolean yaPagado = m.isPagado();
 
         // Armamos el HBox dinámicamente según el contexto
         HBox hbox = new HBox(6, btnEditar, btnEliminar);
-        if (esDebito && esEgreso) {
+        if (esDebito && esEgreso && !yaPagado) {
           hbox.getChildren().add(btnPagar);
         }
         setGraphic(hbox);
@@ -356,6 +357,7 @@ public class DetalleController {
           );
 
           new MovimientoDao().save(pago);
+          new MovimientoDao().marcarPagado(m.getId()); // ← marca el egreso como pagado
 
           logger.info("Pago registrado: {} - ${} - {}", m.getDescripcion(), monto, fecha);
           MovimientoEventBus.publish("pago");

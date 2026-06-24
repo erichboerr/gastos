@@ -15,11 +15,12 @@ public class Movimiento {
   private String moneda;
   private int cuotas;
   private String cuotaTexto;   // campo calculado, no se persiste
+  private boolean pagado; // persiste en DB
 
   // --- Constructor completo — usado al leer desde la DB ---
   public Movimiento(int id, int tarjetaId, int comercioId, LocalDate fecha,
                     String descripcion, BigDecimal monto, String categoria,
-                    String moneda, int cuotas) {
+                    String moneda, int cuotas, boolean pagado) {
     this.id = id;
     this.tarjetaId = tarjetaId;
     this.comercioId = comercioId;
@@ -30,29 +31,30 @@ public class Movimiento {
     this.moneda = moneda;
     this.cuotas = cuotas;
     this.cuotaTexto = "";
+    this.pagado = pagado;
   }
 
   // --- Constructor para EGRESO — con comercio, sin descripción libre ---
   public Movimiento(int tarjetaId, int comercioId, LocalDate fecha,
                     BigDecimal monto, String moneda, int cuotas) {
-    this(0, tarjetaId, comercioId, fecha, null, monto, "EGRESO", moneda, cuotas);
+    this(0, tarjetaId, comercioId, fecha, null, monto, "EGRESO", moneda, cuotas, false);
   }
 
   // --- Constructor para PAGO — sin comercio, con descripción libre ---
   public Movimiento(int tarjetaId, LocalDate fecha, String descripcion,
                     BigDecimal monto, String moneda) {
-    this(0, tarjetaId, 0, fecha, descripcion, monto, "PAGO", moneda, 1);
+    this(0, tarjetaId, 0, fecha, descripcion, monto, "PAGO", moneda, 1, false);
   }
 
   // --- Constructor para RECURRENTES — con comercio, cuota única ---
   public Movimiento(int tarjetaId, int comercioId, LocalDate fecha, BigDecimal monto, String moneda) {
-    this(0, tarjetaId, comercioId, fecha, null, monto, "EGRESO", moneda, 1);
+    this(0, tarjetaId, comercioId, fecha, null, monto, "EGRESO", moneda, 1, false);
   }
 
   // --- Constructor para recurrentes — descripción libre, categoría EGRESO, cuota única ---
   public Movimiento(int tarjetaId, LocalDate fecha, String descripcion,
                     BigDecimal monto, String categoria, String moneda) {
-    this(0, tarjetaId, 0, fecha, descripcion, monto, categoria, moneda, 1);
+    this(0, tarjetaId, 0, fecha, descripcion, monto, categoria, moneda, 1, false);
   }
 
   // --- Getters y Setters ---
@@ -136,4 +138,7 @@ public class Movimiento {
   public void setCuotaTexto(String cuotaTexto) {
     this.cuotaTexto = cuotaTexto;
   }
+
+  public boolean isPagado() { return pagado; }
+  public void setPagado(boolean pagado) { this.pagado = pagado; }
 }

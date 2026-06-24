@@ -263,6 +263,16 @@ public class MovimientoDao {
     }
   }
 
+  /** Marca un movimiento como pagado — oculta el botón Pagar en la UI */
+  public void marcarPagado(int movimientoId) throws SQLException {
+    String sql = "UPDATE movimiento SET pagado = TRUE WHERE id = ?";
+    try (Connection c = Db.getDataSource().getConnection();
+         PreparedStatement ps = c.prepareStatement(sql)) {
+      ps.setInt(1, movimientoId);
+      ps.executeUpdate();
+    }
+  }
+
   // --- Helper ---
 
   private Movimiento mapRow(ResultSet rs) throws SQLException {
@@ -275,7 +285,8 @@ public class MovimientoDao {
         rs.getBigDecimal("monto"),
         rs.getString("categoria"),
         rs.getString("moneda"),
-        rs.getInt("cuotas")
+        rs.getInt("cuotas"),
+        rs.getBoolean("pagado")
     );
   }
 }
