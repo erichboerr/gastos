@@ -168,9 +168,6 @@ public class CierreTarjetaDao {
         "LIMIT 1";
     try (Connection conn = Db.getDataSource().getConnection();
          PreparedStatement ps = conn.prepareStatement(sql)) {
-      System.out.println(tarjetaId);
-      System.out.println(mes.getYear());
-      System.out.println(mes.getMonthValue());
       ps.setInt(1, tarjetaId);
       ps.setInt(2, mes.getYear());
       ps.setInt(3, mes.getMonthValue());

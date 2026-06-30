@@ -12,20 +12,39 @@
             <!-- Título -->
             <Label fx:id="lblTitulo" text="Detalle de movimientos"
                    style="-fx-font-size:16; -fx-font-weight:bold; -fx-padding:10;"/>
-            <!-- Navegación por mes -->
-            <!-- Navegación por mes + resumen -->
-            <HBox spacing="10" alignment="CENTER" style="-fx-padding:4 10 8 10; -fx-background-color:#f0f0f0;">
-                <Button text="◀" onAction="#meAnterior"
-                        style="-fx-background-color:transparent; -fx-font-size:14; -fx-cursor:hand;"/>
-                <Label fx:id="lblMes"
-                       style="-fx-font-size:14; -fx-font-weight:bold;" minWidth="140" alignment="CENTER"/>
-                <Button text="▶" onAction="#meSiguiente"
-                        style="-fx-background-color:transparent; -fx-font-size:14; -fx-cursor:hand;"/>
-                <Separator orientation="VERTICAL"/>
-                <Label fx:id="lblConsumos" style="-fx-font-size:12; -fx-text-fill:#2c3e50;"/>
-                <Label fx:id="lblPagos" style="-fx-font-size:12; -fx-text-fill:#27ae60;"/>
-                <Label fx:id="lblSaldo" style="-fx-font-size:12; -fx-font-weight:bold;"/>
-            </HBox>
+
+            <!-- Barra superior en 3 bloques: 1/4 - 2/4 - 1/4 -->
+            <GridPane style="-fx-padding:6 10 8 10; -fx-background-color:#f0f0f0;">
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="25"/>
+                    <ColumnConstraints percentWidth="50"/>
+                    <ColumnConstraints percentWidth="25"/>
+                </columnConstraints>
+
+                <!-- Bloque 1/4 — navegación de mes -->
+                <HBox spacing="6" alignment="CENTER_LEFT" GridPane.columnIndex="0">
+                    <Button text="◀" onAction="#meAnterior"
+                            style="-fx-background-color:transparent; -fx-font-size:14; -fx-cursor:hand;"/>
+                    <Label fx:id="lblMes"
+                           style="-fx-font-size:14; -fx-font-weight:bold;" minWidth="120" alignment="CENTER"/>
+                    <Button text="▶" onAction="#meSiguiente"
+                            style="-fx-background-color:transparent; -fx-font-size:14; -fx-cursor:hand;"/>
+                </HBox>
+
+                <!-- Bloque 2/4 — consumos, pagos, saldo -->
+                <HBox spacing="14" alignment="CENTER" GridPane.columnIndex="1">
+                    <Label fx:id="lblConsumos" style="-fx-font-size:12; -fx-text-fill:#2c3e50;"/>
+                    <Label fx:id="lblPagos" style="-fx-font-size:12; -fx-text-fill:#27ae60;"/>
+                    <Label fx:id="lblSaldo" style="-fx-font-size:12; -fx-font-weight:bold;"/>
+                </HBox>
+
+                <!-- Bloque 1/4 — botón PDF -->
+                <HBox alignment="CENTER_RIGHT" GridPane.columnIndex="2">
+                    <Button fx:id="btnPdf" text="PDF" onAction="#exportarPdf"
+                            style="-fx-background-color:#c0392b; -fx-text-fill:white; -fx-font-weight:bold;"/>
+                </HBox>
+
+            </GridPane>
         </VBox>
     </top>
     <center>
@@ -36,7 +55,7 @@
                 <TableColumn fx:id="colComentario" text="Comentario" prefWidth="220"/>
                 <TableColumn fx:id="colMonto" text="Monto" prefWidth="120"/>
                 <TableColumn fx:id="colCuota" text="Tipo" prefWidth="100"/>
-                <TableColumn fx:id="colAcciones" text="Acciones" prefWidth="150"/>
+                <TableColumn fx:id="colAcciones" text="Acciones" prefWidth="180"/>
             </columns>
         </TableView>
     </center>

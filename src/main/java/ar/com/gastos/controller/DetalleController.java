@@ -69,6 +69,8 @@ public class DetalleController {
 
   // Mes navegable — se inicializa con el mes que pasa el DashboardController
   private YearMonth mesVisible = YearMonth.now();
+  private BigDecimal totalConsumosActual = BigDecimal.ZERO;
+  private BigDecimal totalPagosActual = BigDecimal.ZERO;
 
   private static final NumberFormat CURRENCY =
       NumberFormat.getCurrencyInstance(Locale.of("es", "AR"));
@@ -265,7 +267,10 @@ public class DetalleController {
           }
         }
       }
+      this.totalConsumosActual = totalConsumos;
+      this.totalPagosActual = totalPagos;
 
+      tablaMovimientos.setItems(FXCollections.observableArrayList(movimientosFiltrados));
       tablaMovimientos.setItems(FXCollections.observableArrayList(movimientosFiltrados));
 
       BigDecimal saldo = totalConsumos.subtract(totalPagos);
@@ -387,5 +392,46 @@ public class DetalleController {
       Toast.show((Stage) tablaMovimientos.getScene().getWindow(), "Error al eliminar");
       logger.error("Error al eliminar movimiento id {}", m.getId(), ex);
     }
+  }
+
+  @FXML
+  private void exportarPdf() {
+    try {
+      javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
+      fileChooser.setTitle("Guardar PDF");
+      fileChooser.setInitialFileName("detalle_" + tarjetaActual.getNombre()
+          .replaceAll("[^a-zA-Z0-9]", "_") + "_" + mesVisible + ".pdf");
+      fileChooser.getExtensionFilters().add(
+          new javafx.stage.FileChooser.ExtensionFilter("PDF", "*.pdf"));
+
+      java.io.File archivo = fileChooser.showSaveDialog(getStage());
+      if (archivo == null) return;
+
+      String nombreMes = mesVisible.getMonth()
+          .getDisplayName(java.time.format.TextStyle.FULL, new java.util.Locale("es"));
+      nombreMes = nombreMes.substring(0, 1).toUpperCase() + nombreMes.substring(1)
+          + " " + mesVisible.getYear();
+
+      ar.com.gastos.util.PdfExportService.exportarDetalle(
+          tarjetaActual.getNombre(),
+          nombreMes,
+          tablaMovimientos.getItems(),
+          totalConsumosActual,
+          totalPagosActual,
+          totalConsumosActual.subtract(totalPagosActual),
+          archivo.getAbsolutePath()
+      );
+
+      Toast.show(getStage(), "PDF exportado correctamente");
+      logger.info("PDF exportado: {}", archivo.getAbsolutePath());
+
+    } catch (Exception ex) {
+      Toast.show(getStage(), "Error al exportar PDF");
+      logger.error("Error al exportar PDF", ex);
+    }
+  }
+
+  private Stage getStage() {
+    return (Stage) tablaMovimientos.getScene().getWindow();
   }
 }

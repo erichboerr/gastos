@@ -391,15 +391,20 @@ public class DashboardController {
     HBox.setHgrow(btnDetalle, Priority.ALWAYS);
     btnDetalle.setMaxWidth(Double.MAX_VALUE);
 
-    Button btnPagar = crearBotonPagar(t, cierreAnt);
-    HBox.setHgrow(btnPagar, Priority.ALWAYS);
-    btnPagar.setMaxWidth(Double.MAX_VALUE);
-
     Button btnEditar = crearBotonEditarTarjeta(t);
     HBox.setHgrow(btnEditar, Priority.ALWAYS);
     btnEditar.setMaxWidth(Double.MAX_VALUE);
 
-    HBox hboxBotones = new HBox(6, btnDetalle, btnPagar, btnEditar);
+    HBox hboxBotones;
+    if (!"DEBITO".equals(t.getTipo())) {
+      // Solo crédito tiene botón Pagar
+      Button btnPagar = crearBotonPagar(t, cierreAnt);
+      HBox.setHgrow(btnPagar, Priority.ALWAYS);
+      btnPagar.setMaxWidth(Double.MAX_VALUE);
+      hboxBotones = new HBox(6, btnDetalle, btnPagar, btnEditar);
+    } else {
+      hboxBotones = new HBox(6, btnDetalle, btnEditar);
+    }
     hboxBotones.setMaxWidth(Double.MAX_VALUE);
 
     card.getChildren().addAll(lblNombre, new Separator(), grid, new Separator(), hboxBotones);
@@ -506,7 +511,7 @@ public class DashboardController {
     btn.setOnAction(e -> {
       try {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/ar/com/gastos/detalle.fxml"));
-        Scene scene = new Scene(loader.load(), 920, 600);
+        Scene scene = new Scene(loader.load(), 950, 600);
         DetalleController ctrl = loader.getController();
         ctrl.setTarjeta(t, mesVisible);
         Stage stage = new Stage();
@@ -578,4 +583,6 @@ public class DashboardController {
       logger.error("Error al abrir restaurar backup", ex);
     }
   }
+
+
 }

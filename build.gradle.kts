@@ -52,6 +52,8 @@ dependencies {
     implementation("org.postgresql:postgresql:42.7.2")
     implementation("com.zaxxer:HikariCP:5.0.1")
 
+    implementation("org.apache.pdfbox:pdfbox:3.0.3")
+
     testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
 
