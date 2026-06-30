@@ -48,6 +48,9 @@ public class EgresoController {
   private Label lblCuotas;
   @FXML
   private TextField txtCuotas;
+  @FXML
+  private TextField txtComentario;
+
 
   // Lista completa de comercios para el filtro
   private final ObservableList<Comercio> todosLosComercios = FXCollections.observableArrayList();
@@ -249,6 +252,8 @@ public class EgresoController {
         "EGRESO",
         "ARS"
     );
+    mov.setComentario(txtComentario.getText().trim().isEmpty() ? null
+        : txtComentario.getText().toUpperCase().trim());
     new MovimientoDao().save(mov);
     logger.info("Egreso DÉBITO guardado: {} - ${} - {}", descripcion, monto, fecha);
   }
@@ -292,6 +297,8 @@ public class EgresoController {
         "ARS",
         cuotas
     );
+    mov.setComentario(txtComentario.getText().trim().isEmpty() ? null
+        : txtComentario.getText().toUpperCase().trim());
     new MovimientoDao().save(mov);
     logger.info("Egreso CRÉDITO guardado: {} en {} - ${} - {} cuotas",
         comercio.getNombre(), tarjeta.getNombre(), monto, cuotas);
@@ -306,6 +313,7 @@ public class EgresoController {
     txtMonto.clear();
     txtCuotas.clear();
     txtFecha.setValue(null);
+    txtComentario.clear();
   }
 
   @FXML

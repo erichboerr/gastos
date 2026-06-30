@@ -59,6 +59,8 @@ public class DetalleController {
   private TableColumn<Movimiento, String> colCuota;
   @FXML
   private TableColumn<Movimiento, Void> colAcciones;
+  @FXML private
+  TableColumn<Movimiento, String> colComentario;
 
   private Tarjeta tarjetaActual;
 
@@ -89,9 +91,10 @@ public class DetalleController {
   @FXML
   public void initialize() {
     colFecha.setCellValueFactory(new PropertyValueFactory<>("fecha"));
-    colDescripcion.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
+    colDescripcion.setCellValueFactory(new PropertyValueFactory<>("Descripcion"));
     colMonto.setCellValueFactory(new PropertyValueFactory<>("monto"));
     colCuota.setCellValueFactory(new PropertyValueFactory<>("cuotaTexto"));
+    colComentario.setCellValueFactory(new PropertyValueFactory<>("comentario"));
 
     // Formato de fecha dd/MM/yyyy
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");

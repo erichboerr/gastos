@@ -4,22 +4,14 @@ import ar.com.gastos.dao.*;
 import ar.com.gastos.model.*;
 import ar.com.gastos.util.BackupService;
 import ar.com.gastos.util.MovimientoEventBus;
-
 import ar.com.gastos.util.Toast;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.Separator;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,22 +36,14 @@ public class DashboardController {
   private static final NumberFormat CURRENCY = NumberFormat.getCurrencyInstance(LOCALE_ES);
   private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-  static {
-    CURRENCY.setMaximumFractionDigits(2);
-  }
+  static { CURRENCY.setMaximumFractionDigits(2); }
 
-  @FXML
-  private Label lblBalance;
-  @FXML
-  private Label lblIngresos;
-  @FXML
-  private Label lblEgresos;
-  @FXML
-  private Label lblMesNavegacion;
-  @FXML
-  private GridPane cardsPane;
-  @FXML
-  private VBox cardIngresos;
+  @FXML private Label    lblBalance;
+  @FXML private Label    lblIngresos;
+  @FXML private Label    lblEgresos;
+  @FXML private Label    lblMesNavegacion;
+  @FXML private GridPane cardsPane;
+  @FXML private VBox     cardIngresos;
 
   private Consumer<String> subscriber;
 
@@ -74,24 +58,10 @@ public class DashboardController {
     });
   }
 
-  // --- Navegación por mes ---
+  @FXML private void meAnterior()  { mesVisible = mesVisible.minusMonths(1); recargarDashboard(); }
+  @FXML private void meSiguiente() { mesVisible = mesVisible.plusMonths(1);  recargarDashboard(); }
 
-  @FXML
-  private void meAnterior() {
-    mesVisible = mesVisible.minusMonths(1);
-    recargarDashboard();
-  }
-
-  @FXML
-  private void meSiguiente() {
-    mesVisible = mesVisible.plusMonths(1);
-    recargarDashboard();
-  }
-
-  // --- Apertura de formularios ---
-
-  @FXML
-  private void abrirIngreso() {
+  @FXML private void abrirIngreso() {
     try {
       FXMLLoader loader = new FXMLLoader(getClass().getResource("/ar/com/gastos/ingreso.fxml"));
       Scene scene = new Scene(loader.load(), 600, 600);
@@ -99,13 +69,10 @@ public class DashboardController {
       stage.setTitle("Ingresos");
       stage.setScene(scene);
       stage.show();
-    } catch (IOException ex) {
-      logger.error("Error al abrir ingresos", ex);
-    }
+    } catch (IOException ex) { logger.error("Error al abrir ingresos", ex); }
   }
 
-  @FXML
-  private void abrirCierreTarjeta() {
+  @FXML private void abrirCierreTarjeta() {
     try {
       FXMLLoader loader = new FXMLLoader(getClass().getResource("/ar/com/gastos/CierreTarjeta.fxml"));
       Scene scene = new Scene(loader.load(), 670, 620);
@@ -113,13 +80,10 @@ public class DashboardController {
       stage.setTitle("Cierre de Tarjeta");
       stage.setScene(scene);
       stage.show();
-    } catch (IOException ex) {
-      logger.error("Error al abrir cierres", ex);
-    }
+    } catch (IOException ex) { logger.error("Error al abrir cierres", ex); }
   }
 
-  @FXML
-  private void abrirComercios() {
+  @FXML private void abrirComercios() {
     try {
       FXMLLoader loader = new FXMLLoader(getClass().getResource("/ar/com/gastos/comercios.fxml"));
       Scene scene = new Scene(loader.load(), 670, 620);
@@ -127,38 +91,16 @@ public class DashboardController {
       stage.setTitle("Comercios");
       stage.setScene(scene);
       stage.show();
-    } catch (IOException ex) {
-      logger.error("Error al abrir comercios", ex);
-    }
+    } catch (IOException ex) { logger.error("Error al abrir comercios", ex); }
   }
 
-  @FXML
-  private void abrirNuevaTarjeta() {
-    abrirFormulario("/ar/com/gastos/nueva-tarjeta.fxml", "Nueva Tarjeta");
-  }
+  @FXML private void abrirNuevaTarjeta()  { abrirFormulario("/ar/com/gastos/nueva-tarjeta.fxml",      "Nueva Tarjeta"); }
+  @FXML private void abrirEgreso()        { abrirFormulario("/ar/com/gastos/egreso.fxml",             "Nuevo Egreso"); }
+  @FXML private void abrirPago()          { abrirFormulario("/ar/com/gastos/pago.fxml",               "Registrar Pago"); }
+  @FXML private void abrirRecurrentes()   { abrirFormulario("/ar/com/gastos/gastos-recurrentes.fxml", "Gastos Recurrentes"); }
+  @FXML private void abrirGenerarMes()    { abrirFormulario("/ar/com/gastos/generar-mes.fxml",        "Generar Mes"); }
 
-  @FXML
-  private void abrirEgreso() {
-    abrirFormulario("/ar/com/gastos/egreso.fxml", "Nuevo Egreso");
-  }
-
-  @FXML
-  private void abrirPago() {
-    abrirFormulario("/ar/com/gastos/pago.fxml", "Registrar Pago");
-  }
-
-  @FXML
-  private void abrirRecurrentes() {
-    abrirFormulario("/ar/com/gastos/gastos-recurrentes.fxml", "Gastos Recurrentes");
-  }
-
-  @FXML
-  private void abrirGenerarMes() {
-    abrirFormulario("/ar/com/gastos/generar-mes.fxml", "Generar Mes");
-  }
-
-  @FXML
-  private void abrirResumenAnual() {
+  @FXML private void abrirResumenAnual() {
     try {
       FXMLLoader loader = new FXMLLoader(getClass().getResource("/ar/com/gastos/resumen-anual.fxml"));
       Scene scene = new Scene(loader.load(), 700, 500);
@@ -168,9 +110,7 @@ public class DashboardController {
       stage.setTitle("Resumen Anual " + mesVisible.getYear());
       stage.setScene(scene);
       stage.show();
-    } catch (IOException ex) {
-      logger.error("Error al abrir resumen anual", ex);
-    }
+    } catch (IOException ex) { logger.error("Error al abrir resumen anual", ex); }
   }
 
   private void abrirFormulario(String fxmlPath, String titulo) {
@@ -181,9 +121,7 @@ public class DashboardController {
       stage.setTitle(titulo);
       stage.setScene(scene);
       stage.show();
-    } catch (IOException ex) {
-      logger.error("Error al abrir formulario: {}", fxmlPath, ex);
-    }
+    } catch (IOException ex) { logger.error("Error al abrir formulario: {}", fxmlPath, ex); }
   }
 
   // --- Carga del dashboard ---
@@ -197,11 +135,11 @@ public class DashboardController {
     lblMesNavegacion.setText(nombreMesCap + " " + mesVisible.getYear());
 
     try {
-      TarjetaDao tarjetaDao = new TarjetaDao();
+      TarjetaDao tarjetaDao       = new TarjetaDao();
       MovimientoDao movimientoDao = new MovimientoDao();
-      IngresoDao ingresoDao = new IngresoDao();
-      CierreTarjetaDao cierreDao = new CierreTarjetaDao();
-      CuotaDao cuotaDao = new CuotaDao();
+      IngresoDao ingresoDao       = new IngresoDao();
+      CierreTarjetaDao cierreDao  = new CierreTarjetaDao();
+      CuotaDao cuotaDao           = new CuotaDao();
 
       List<Tarjeta> tarjetas = tarjetaDao.findAllActivas();
 
@@ -212,72 +150,109 @@ public class DashboardController {
           .sum();
 
       double totalEgresos = 0;
-      double totalPagos = 0;
+      double totalPagos   = 0;
 
       for (Tarjeta t : tarjetas) {
-        CierreTarjeta cierreMes = cierreDao.findCierrePorMesDeCierre(t.getId(), mesVisible);
 
-        if (cierreMes != null) {
-          CierreTarjeta cierreAnterior = cierreDao.findAnteriorPorTarjeta(
-              t.getId(), cierreMes.getFechaCierre());
+        // Período anterior — cuyo vencimiento cae en mesVisible (lo que se abona este mes)
+        CierreTarjeta cierrePeriodoAnterior = cierreDao.findCierrePorVencimiento(t.getId(), mesVisible);
 
-          LocalDate desde = (cierreAnterior != null)
-              ? cierreAnterior.getFechaCierre().plusDays(1)
-              : cierreMes.getMes();
-          LocalDate hasta = cierreMes.getFechaCierre();
-          logger.debug("Tarjeta [{}] — período desde: {} hasta: {}", t.getNombre(), desde, hasta);
+        // Período actual — cuyo cierre cae en mesVisible (lo que se está consumiendo)
+        CierreTarjeta cierrePeriodoActual = cierreDao.findCierrePorMesDeCierre(t.getId(), mesVisible);
 
-          List<Movimiento> movimientos = movimientoDao.findByTarjetaEnRangoPeriodo(t.getId(), desde, hasta);
+        if (cierrePeriodoAnterior != null) {
+          // Calculamos el período anterior (lo que se abona este mes)
+          CierreTarjeta cierreAnt = cierreDao.findAnteriorPorTarjeta(
+              t.getId(), cierrePeriodoAnterior.getFechaCierre());
 
-          BigDecimal totalPeriodo = BigDecimal.ZERO;
-          BigDecimal pagosPeriodo = BigDecimal.ZERO;
+          LocalDate desdeAnt = (cierreAnt != null)
+              ? cierreAnt.getFechaCierre().plusDays(1)
+              : cierrePeriodoAnterior.getMes();
+          LocalDate hastaAnt = cierrePeriodoAnterior.getFechaCierre();
 
-          for (Movimiento m : movimientos) {
+          List<Movimiento> movsAnt = movimientoDao.findByTarjetaEnRangoPeriodo(
+              t.getId(), desdeAnt, hastaAnt);
+
+          BigDecimal totalPeriodoAnt = BigDecimal.ZERO;
+          BigDecimal pagosPeriodoAnt = BigDecimal.ZERO;
+
+          for (Movimiento m : movsAnt) {
             if ("EGRESO".equals(m.getCategoria())) {
               if (m.getCuotas() == 1) {
-                totalPeriodo = totalPeriodo.add(m.getMonto());
-                totalEgresos += m.getMonto().doubleValue();
+                totalPeriodoAnt = totalPeriodoAnt.add(m.getMonto());
+                totalEgresos   += m.getMonto().doubleValue();
               } else {
-                // Calculamos qué número de cuota corresponde a este período
                 int nroCuota = cierreDao.calcularNroCuota(
-                    t.getId(), m.getFecha(), desde, hasta);
-
+                    t.getId(), m.getFecha(), desdeAnt, hastaAnt);
                 if (nroCuota >= 1 && nroCuota <= m.getCuotas()) {
                   List<Cuota> cuotas = cuotaDao.findByMovimiento(m.getId());
                   for (Cuota c : cuotas) {
                     if (c.getNroCuota() == nroCuota) {
-                      totalPeriodo = totalPeriodo.add(c.getMonto());
-                      totalEgresos += c.getMonto().doubleValue();
+                      totalPeriodoAnt = totalPeriodoAnt.add(c.getMonto());
+                      totalEgresos   += c.getMonto().doubleValue();
                       break;
                     }
                   }
                 }
               }
             } else if ("PAGO".equals(m.getCategoria())) {
-              pagosPeriodo = pagosPeriodo.add(m.getMonto());
-              totalPagos += m.getMonto().doubleValue();
+              pagosPeriodoAnt = pagosPeriodoAnt.add(m.getMonto());
+              totalPagos     += m.getMonto().doubleValue();
             }
           }
 
-          t.setTotalGastado(totalPeriodo.doubleValue());
-          t.setTotalPagado(pagosPeriodo.doubleValue());
-          t.setRestaAbonar(totalPeriodo.subtract(pagosPeriodo).doubleValue());
+          t.setTotalGastado(totalPeriodoAnt.doubleValue());
+          t.setTotalPagado(pagosPeriodoAnt.doubleValue());
+          t.setRestaAbonar(totalPeriodoAnt.subtract(pagosPeriodoAnt).doubleValue());
 
-          // Creamos la card con el cierre disponible
-          cardsPane.add(crearCard(t, cierreMes), col(tarjetas, t), row(tarjetas, t));
+          // Calculamos consumos del período actual (lo que se está gastando este mes)
+          BigDecimal totalPeriodoActual = BigDecimal.ZERO;
+          if (cierrePeriodoActual != null) {
+            CierreTarjeta cierreAntActual = cierreDao.findAnteriorPorTarjeta(
+                t.getId(), cierrePeriodoActual.getFechaCierre());
+
+            LocalDate desdeAct = (cierreAntActual != null)
+                ? cierreAntActual.getFechaCierre().plusDays(1)
+                : cierrePeriodoActual.getMes();
+            LocalDate hastaAct = cierrePeriodoActual.getFechaCierre();
+
+            List<Movimiento> movsAct = movimientoDao.findByTarjetaEnRangoPeriodo(
+                t.getId(), desdeAct, hastaAct);
+
+            for (Movimiento m : movsAct) {
+              if ("EGRESO".equals(m.getCategoria())) {
+                if (m.getCuotas() == 1) {
+                  totalPeriodoActual = totalPeriodoActual.add(m.getMonto());
+                } else {
+                  int nroCuota = cierreDao.calcularNroCuota(
+                      t.getId(), m.getFecha(), desdeAct, hastaAct);
+                  if (nroCuota >= 1 && nroCuota <= m.getCuotas()) {
+                    List<Cuota> cuotas = cuotaDao.findByMovimiento(m.getId());
+                    for (Cuota c : cuotas) {
+                      if (c.getNroCuota() == nroCuota) {
+                        totalPeriodoActual = totalPeriodoActual.add(c.getMonto());
+                        break;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          cardsPane.add(
+              crearCard(t, cierrePeriodoAnterior, cierrePeriodoActual, totalPeriodoActual),
+              col(tarjetas, t), row(tarjetas, t));
+
         } else {
-          // Sin cierre definido para este mes
           cardsPane.add(crearCardSinCierre(t), col(tarjetas, t), row(tarjetas, t));
         }
       }
 
       double balance = totalIngresos - totalEgresos;
-      logger.debug("Mes: {} | Ingresos: {} | Egresos: {} | Balance: {}",
-          mesVisible, totalIngresos, totalEgresos, balance);
-
       lblIngresos.setText("Ingresos: " + CURRENCY.format(totalIngresos));
-      lblEgresos.setText("Egresos: " + CURRENCY.format(totalEgresos));
-      lblBalance.setText("Balance: " + CURRENCY.format(balance));
+      lblEgresos.setText("Egresos: "   + CURRENCY.format(totalEgresos));
+      lblBalance.setText("Balance: "   + CURRENCY.format(balance));
 
       cardIngresos.getChildren().add(crearCardIngresos(totalIngresos));
 
@@ -286,14 +261,8 @@ public class DashboardController {
     }
   }
 
-  // Helpers para calcular col/row en la grilla
-  private int col(List<Tarjeta> tarjetas, Tarjeta t) {
-    return tarjetas.indexOf(t) % 3;
-  }
-
-  private int row(List<Tarjeta> tarjetas, Tarjeta t) {
-    return tarjetas.indexOf(t) / 3;
-  }
+  private int col(List<Tarjeta> tarjetas, Tarjeta t) { return tarjetas.indexOf(t) % 3; }
+  private int row(List<Tarjeta> tarjetas, Tarjeta t) { return tarjetas.indexOf(t) / 3; }
 
   // --- Cards ---
 
@@ -319,105 +288,128 @@ public class DashboardController {
   }
 
   /**
-   * Card con cierre definido — muestra dos columnas:
-   * Izquierda: fechas de cierre y vencimiento
-   * Derecha: gastos, pagos, resta abonar
+   * Card con tres columnas:
+   * - Izquierda: fechas (cierre y vencimiento del período anterior)
+   * - Centro: período anterior — lo que se abona este mes
+   * - Derecha: período actual — lo que se está gastando este mes
    */
-  private VBox crearCard(Tarjeta t, CierreTarjeta cierre) {
+  private VBox crearCard(Tarjeta t, CierreTarjeta cierreAnt,
+                         CierreTarjeta cierreAct, BigDecimal totalActual) {
     VBox card = new VBox(8);
     card.getStyleClass().add("card");
-    card.setPrefWidth(480);
+    card.setPrefWidth(560);
     card.setStyle("-fx-padding:16;");
 
-    // Título
     Label lblNombre = new Label(t.getNombre());
     lblNombre.getStyleClass().add("card-title");
 
-    // Contenido en dos columnas
+    // Grid de 3 columnas
     GridPane grid = new GridPane();
-    grid.setHgap(16);
+    grid.setHgap(12);
     grid.setVgap(4);
-    ColumnConstraints col1 = new ColumnConstraints();
-    col1.setPercentWidth(50);
-    ColumnConstraints col2 = new ColumnConstraints();
-    col2.setPercentWidth(50);
-    grid.getColumnConstraints().addAll(col1, col2);
+    ColumnConstraints c1 = new ColumnConstraints(); c1.setPercentWidth(33);
+    ColumnConstraints c2 = new ColumnConstraints(); c2.setPercentWidth(34);
+    ColumnConstraints c3 = new ColumnConstraints(); c3.setPercentWidth(33);
+    grid.getColumnConstraints().addAll(c1, c2, c3);
 
-    // Columna izquierda — fechas
+    // Nombre del mes anterior (período que se abona)
+    String mesAnt = cierreAnt.getFechaCierre().getMonth()
+        .getDisplayName(TextStyle.FULL, Locale.of("es"));
+    mesAnt = mesAnt.substring(0, 1).toUpperCase() + mesAnt.substring(1);
+
+    // Nombre del mes actual
+    String mesAct = mesVisible.getMonth()
+        .getDisplayName(TextStyle.FULL, Locale.of("es"));
+    mesAct = mesAct.substring(0, 1).toUpperCase() + mesAct.substring(1);
+
+    // --- Col 0: Fechas ---
     Label lblFechaTitulo = new Label("Fechas");
     lblFechaTitulo.getStyleClass().add("card-label-key");
 
     Label lblCierreLabel = new Label("Cierre:");
     lblCierreLabel.getStyleClass().add("card-label-key");
-    Label lblCierreVal = new Label(cierre.getFechaCierre().format(DATE_FMT));
+    Label lblCierreVal = new Label(cierreAnt.getFechaCierre().format(DATE_FMT));
     lblCierreVal.getStyleClass().add("card-label-val");
 
     Label lblVencLabel = new Label("Vencimiento:");
     lblVencLabel.getStyleClass().add("card-label-key");
-    Label lblVencVal = new Label(cierre.getFechaVencimiento().format(DATE_FMT));
+    Label lblVencVal = new Label(cierreAnt.getFechaVencimiento().format(DATE_FMT));
     lblVencVal.getStyleClass().add("card-label-val");
 
-    // Columna derecha — movimientos
-    Label lblMovTitulo = new Label("Movimientos");
-    lblMovTitulo.getStyleClass().add("card-label-key");
+    // --- Col 1: Período anterior (lo que se abona) ---
+    Label lblAntTitulo = new Label("Movimientos " + mesAnt);
+    lblAntTitulo.getStyleClass().add("card-label-key");
 
-    Label lblGastosLabel = new Label("Gastos del mes:");
+    Label lblGastosLabel = new Label("Gastos:");
     lblGastosLabel.getStyleClass().add("card-label-key");
     Label lblGastosVal = new Label(CURRENCY.format(t.getTotalGastado()));
     lblGastosVal.getStyleClass().add("card-label-val");
 
-    Label lblPagosLabel = new Label("Pagos realizados:");
+    Label lblPagosLabel = new Label("Pagos:");
     lblPagosLabel.getStyleClass().add("card-label-key");
     Label lblPagosVal = new Label(CURRENCY.format(t.getTotalPagado()));
-    lblPagosVal.setStyle("-fx-font-size:12; -fx-text-fill:#27ae60;"); // verde fijo
+    lblPagosVal.setStyle("-fx-font-size:12; -fx-text-fill:#27ae60;");
 
-    Label lblRestaLabel = new Label("Resta abonar:");
+    Label lblRestaLabel = new Label("Resta:");
     lblRestaLabel.getStyleClass().add("card-label-key");
     Label lblRestaVal = new Label(CURRENCY.format(t.getRestaAbonar()));
-    String colorResta = t.getRestaAbonar() > 0
+    lblRestaVal.setStyle(t.getRestaAbonar() > 0
         ? "-fx-font-size:12; -fx-font-weight:bold; -fx-text-fill:#c0392b;"
-        : "-fx-font-size:12; -fx-font-weight:bold; -fx-text-fill:#27ae60;";
-    lblRestaVal.setStyle(colorResta);
+        : "-fx-font-size:12; -fx-font-weight:bold; -fx-text-fill:#27ae60;");
 
-    // Armamos el grid — col 0 = fechas, col 1 = movimientos
-    grid.add(lblFechaTitulo, 0, 0);
-    grid.add(lblCierreLabel, 0, 1);
-    grid.add(lblCierreVal, 0, 2);
-    grid.add(lblVencLabel, 0, 3);
-    grid.add(lblVencVal, 0, 4);
+    // --- Col 2: Período actual (lo que se está gastando) ---
+    Label lblActTitulo = new Label("Movimientos " + mesAct);
+    lblActTitulo.getStyleClass().add("card-label-key");
 
-    grid.add(lblMovTitulo, 1, 0);
-    grid.add(lblGastosLabel, 1, 1);
-    grid.add(lblGastosVal, 1, 2);
-    grid.add(lblPagosLabel, 1, 3);
-    grid.add(lblPagosVal, 1, 4);
-    grid.add(lblRestaLabel, 1, 5);
-    grid.add(lblRestaVal, 1, 6);
+    Label lblActGastosLabel = new Label("Gastos:");
+    lblActGastosLabel.getStyleClass().add("card-label-key");
+    Label lblActGastosVal = new Label(cierreAct != null
+        ? CURRENCY.format(totalActual) : "Sin cierre");
+    lblActGastosVal.getStyleClass().add("card-label-val");
+
+    // Armamos el grid
+    grid.add(lblFechaTitulo,  0, 0);
+    grid.add(lblCierreLabel,  0, 1);
+    grid.add(lblCierreVal,    0, 2);
+    grid.add(lblVencLabel,    0, 3);
+    grid.add(lblVencVal,      0, 4);
+
+    grid.add(lblAntTitulo,    1, 0);
+    grid.add(lblGastosLabel,  1, 1);
+    grid.add(lblGastosVal,    1, 2);
+    grid.add(lblPagosLabel,   1, 3);
+    grid.add(lblPagosVal,     1, 4);
+    grid.add(lblRestaLabel,   1, 5);
+    grid.add(lblRestaVal,     1, 6);
+
+    grid.add(lblActTitulo,    2, 0);
+    grid.add(lblActGastosLabel, 2, 1);
+    grid.add(lblActGastosVal,   2, 2);
 
     // Botones
     Button btnDetalle = crearBotonDetalle(t);
     HBox.setHgrow(btnDetalle, Priority.ALWAYS);
     btnDetalle.setMaxWidth(Double.MAX_VALUE);
 
+    Button btnPagar = crearBotonPagar(t, cierreAnt);
+    HBox.setHgrow(btnPagar, Priority.ALWAYS);
+    btnPagar.setMaxWidth(Double.MAX_VALUE);
+
     Button btnEditar = crearBotonEditarTarjeta(t);
     HBox.setHgrow(btnEditar, Priority.ALWAYS);
     btnEditar.setMaxWidth(Double.MAX_VALUE);
 
-    HBox hboxBotones = new HBox(6, btnDetalle, btnEditar);
+    HBox hboxBotones = new HBox(6, btnDetalle, btnPagar, btnEditar);
     hboxBotones.setMaxWidth(Double.MAX_VALUE);
 
     card.getChildren().addAll(lblNombre, new Separator(), grid, new Separator(), hboxBotones);
     return card;
   }
 
-  /**
-   * Card sin cierre definido — muestra indicador visual claro
-   * en lugar de ceros que pueden confundir.
-   */
   private VBox crearCardSinCierre(Tarjeta t) {
     VBox card = new VBox(8);
     card.getStyleClass().add("card");
-    card.setPrefWidth(480);
+    card.setPrefWidth(560);
     card.setStyle("-fx-padding:16;");
 
     Label lblNombre = new Label(t.getNombre());
@@ -441,29 +433,80 @@ public class DashboardController {
     return card;
   }
 
-  private void abrirDetalleIngresos() {
-    try {
-      FXMLLoader loader = new FXMLLoader(getClass().getResource("/ar/com/gastos/ingreso.fxml"));
-      Scene scene = new Scene(loader.load(), 620, 600);
-      IngresoController ctrl = loader.getController();
-      ctrl.setMesVisible(mesVisible);
-      Stage stage = new Stage();
-      stage.setTitle("Ingresos - " + mesVisible.getMonth()
-          .getDisplayName(java.time.format.TextStyle.FULL, Locale.of("es")));
-      stage.setScene(scene);
-      stage.show();
-    } catch (IOException ex) {
-      logger.error("Error al abrir detalle ingresos", ex);
-    }
-  }
+  // --- Botón Pagar — abre modal con monto, registra pago con fecha de cierre del período ---
 
+  private Button crearBotonPagar(Tarjeta t, CierreTarjeta cierreAnt) {
+    Button btn = new Button("Pagar");
+    btn.setStyle("-fx-background-color:#27ae60; -fx-text-fill:white; -fx-font-weight:bold;");
+    btn.setOnAction(e -> {
+      // Modal con solo campo de monto
+      Dialog<ButtonType> dialog = new Dialog<>();
+      dialog.setTitle("Pagar tarjeta");
+      dialog.setHeaderText("Pagar: " + t.getNombre());
+
+      TextField txtMonto = new TextField();
+      txtMonto.setPromptText("Ingrese el monto a pagar");
+
+      // Prellenamos con el saldo restante si hay algo pendiente
+      if (t.getRestaAbonar() > 0) {
+        txtMonto.setText(String.format("%.2f", t.getRestaAbonar()));
+      }
+
+      javafx.scene.layout.VBox contenido = new javafx.scene.layout.VBox(8,
+          new Label("Monto:"), txtMonto
+      );
+      contenido.setStyle("-fx-padding:10;");
+      dialog.getDialogPane().setContent(contenido);
+
+      ButtonType btnConfirmar = new ButtonType("Pagar", ButtonBar.ButtonData.OK_DONE);
+      ButtonType btnCancelar  = new ButtonType("Cancelar", ButtonBar.ButtonData.CANCEL_CLOSE);
+      dialog.getDialogPane().getButtonTypes().addAll(btnConfirmar, btnCancelar);
+
+      // Focus en el campo de monto al abrir
+      Platform.runLater(txtMonto::requestFocus);
+
+      dialog.showAndWait().ifPresent(respuesta -> {
+        if (respuesta == btnConfirmar) {
+          try {
+            BigDecimal monto = new BigDecimal(txtMonto.getText().trim()).setScale(2);
+
+            // El pago se registra con la fecha de cierre del período anterior
+            // así queda contabilizado en el período correcto
+            LocalDate fechaPago = cierreAnt.getFechaCierre();
+
+            Movimiento pago = new Movimiento(
+                t.getId(),
+                fechaPago,
+                "PAGO " + t.getNombre().toUpperCase(),
+                monto,
+                "ARS"
+            );
+
+            new MovimientoDao().save(pago);
+            MovimientoEventBus.publish("pago");
+            Toast.show((Stage) lblBalance.getScene().getWindow(),
+                "Pago registrado: " + CURRENCY.format(monto));
+            logger.info("Pago registrado: {} - ${} - fecha {}",
+                t.getNombre(), monto, fechaPago);
+
+          } catch (NumberFormatException ex) {
+            Toast.show((Stage) lblBalance.getScene().getWindow(), "Monto inválido");
+          } catch (Exception ex) {
+            Toast.show((Stage) lblBalance.getScene().getWindow(), "Error al registrar pago");
+            logger.error("Error al registrar pago de tarjeta {}", t.getNombre(), ex);
+          }
+        }
+      });
+    });
+    return btn;
+  }
 
   private Button crearBotonDetalle(Tarjeta t) {
     Button btn = new Button("Ver detalle");
     btn.setOnAction(e -> {
       try {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/ar/com/gastos/detalle.fxml"));
-        Scene scene = new Scene(loader.load(), 800, 600);
+        Scene scene = new Scene(loader.load(), 920, 600);
         DetalleController ctrl = loader.getController();
         ctrl.setTarjeta(t, mesVisible);
         Stage stage = new Stage();
@@ -496,25 +539,36 @@ public class DashboardController {
     return btn;
   }
 
-  @FXML
-  private void ejecutarBackup() {
+  private void abrirDetalleIngresos() {
+    try {
+      FXMLLoader loader = new FXMLLoader(getClass().getResource("/ar/com/gastos/ingreso.fxml"));
+      Scene scene = new Scene(loader.load(), 620, 600);
+      IngresoController ctrl = loader.getController();
+      ctrl.setMesVisible(mesVisible);
+      Stage stage = new Stage();
+      stage.setTitle("Ingresos - " + mesVisible.getMonth()
+          .getDisplayName(TextStyle.FULL, Locale.of("es")));
+      stage.setScene(scene);
+      stage.show();
+    } catch (IOException ex) {
+      logger.error("Error al abrir detalle ingresos", ex);
+    }
+  }
+
+  @FXML private void ejecutarBackup() {
     try {
       String path = BackupService.ejecutarBackup();
-      Toast.show((Stage) lblBalance.getScene().getWindow(),
-          "Backup guardado: " + path);
+      Toast.show((Stage) lblBalance.getScene().getWindow(), "Backup guardado: " + path);
       logger.info("Backup ejecutado correctamente: {}", path);
     } catch (Exception ex) {
-      Toast.show((Stage) lblBalance.getScene().getWindow(),
-          "Error al ejecutar backup: " + ex.getMessage());
+      Toast.show((Stage) lblBalance.getScene().getWindow(), "Error al ejecutar backup: " + ex.getMessage());
       logger.error("Error al ejecutar backup", ex);
     }
   }
 
-  @FXML
-  private void abrirRestaurarBackup() {
+  @FXML private void abrirRestaurarBackup() {
     try {
-      FXMLLoader loader = new FXMLLoader(
-          getClass().getResource("/ar/com/gastos/restaurar-backup.fxml"));
+      FXMLLoader loader = new FXMLLoader(getClass().getResource("/ar/com/gastos/restaurar-backup.fxml"));
       Scene scene = new Scene(loader.load());
       Stage stage = new Stage();
       stage.setTitle("Restaurar Backup");

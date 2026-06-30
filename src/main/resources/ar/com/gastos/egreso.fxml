@@ -6,7 +6,7 @@
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="ar.com.gastos.controller.EgresoController"
       spacing="10" alignment="TOP_CENTER" style="-fx-padding:20;"
-      prefWidth="400" prefHeight="480">
+      prefWidth="400" prefHeight="520">
 
     <Label text="Nuevo Egreso"
            style="-fx-font-size:16; -fx-font-weight:bold; -fx-text-fill:#2c3e50;"/>
@@ -41,6 +41,11 @@
     <!-- Cuotas solo para crédito -->
     <Label fx:id="lblCuotas" text="Cuotas (dejar vacío = 1)"/>
     <TextField fx:id="txtCuotas" promptText="1" maxWidth="Infinity"/>
+
+  <!-- Comentario opcional -->
+  <Label text="Comentario (opcional)"/>
+  <TextField fx:id="txtComentario" promptText="Ej: compra ropa hijos"
+             maxWidth="Infinity"/>
 
     <Separator/>
 

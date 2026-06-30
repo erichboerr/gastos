@@ -21,8 +21,8 @@ public class MovimientoDao {
    * Si tiene cuotas > 1 genera las filas en la tabla cuota en la misma transacción.
    */
   public void save(Movimiento m) throws SQLException {
-    String sql = "INSERT INTO movimiento(tarjeta_id, comercio_id, fecha, descripcion, monto, categoria, moneda, cuotas) " +
-        "VALUES (?,?,?,?,?,?,?,?) RETURNING id";
+    String sql = "INSERT INTO movimiento(tarjeta_id, comercio_id, fecha, descripcion, monto, categoria, moneda, cuotas, comentario) " +
+        "VALUES (?,?,?,?,?,?,?,?,?) RETURNING id";
 
     try (Connection c = Db.getDataSource().getConnection();
          PreparedStatement ps = c.prepareStatement(sql)) {
@@ -43,6 +43,7 @@ public class MovimientoDao {
       ps.setString(6, m.getCategoria());
       ps.setString(7, m.getMoneda());
       ps.setInt(8, m.getCuotas());
+      ps.setString(9, m.getComentario() != null ? m.getComentario().trim() : null);
 
       ResultSet rs = ps.executeQuery();
       if (rs.next()) {
@@ -222,7 +223,7 @@ public class MovimientoDao {
    * Borra las cuotas viejas y regenera si corresponde.
    */
   public void update(Movimiento m) throws SQLException {
-    String sql = "UPDATE movimiento SET fecha=?, comercio_id=?, descripcion=?, monto=?, cuotas=? WHERE id=?";
+    String sql = "UPDATE movimiento SET fecha=?, comercio_id=?, descripcion=?, monto=?, cuotas=?, comentario=? WHERE id=?";
 
     try (Connection c = Db.getDataSource().getConnection()) {
       c.setAutoCommit(false);
@@ -238,7 +239,8 @@ public class MovimientoDao {
               ? m.getDescripcion().toUpperCase().trim() : null);
           ps.setBigDecimal(4, m.getMonto());
           ps.setInt(5, m.getCuotas());
-          ps.setInt(6, m.getId());
+          ps.setString(6, m.getComentario() != null ? m.getComentario().trim() : null);
+          ps.setInt(7, m.getId());
           ps.executeUpdate();
         }
 
@@ -263,7 +265,9 @@ public class MovimientoDao {
     }
   }
 
-  /** Marca un movimiento como pagado — oculta el botón Pagar en la UI */
+  /**
+   * Marca un movimiento como pagado — oculta el botón Pagar en la UI
+   */
   public void marcarPagado(int movimientoId) throws SQLException {
     String sql = "UPDATE movimiento SET pagado = TRUE WHERE id = ?";
     try (Connection c = Db.getDataSource().getConnection();
@@ -286,7 +290,8 @@ public class MovimientoDao {
         rs.getString("categoria"),
         rs.getString("moneda"),
         rs.getInt("cuotas"),
-        rs.getBoolean("pagado")
+        rs.getBoolean("pagado"),
+        rs.getString("comentario")
     );
   }
 }
