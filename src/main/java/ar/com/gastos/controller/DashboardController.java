@@ -103,7 +103,7 @@ public class DashboardController {
   @FXML private void abrirResumenAnual() {
     try {
       FXMLLoader loader = new FXMLLoader(getClass().getResource("/ar/com/gastos/resumen-anual.fxml"));
-      Scene scene = new Scene(loader.load(), 700, 500);
+      Scene scene = new Scene(loader.load(), 780, 600);
       ResumenAnualController ctrl = loader.getController();
       ctrl.cargarAnio(mesVisible.getYear());
       Stage stage = new Stage();
@@ -583,6 +583,4 @@ public class DashboardController {
       logger.error("Error al abrir restaurar backup", ex);
     }
   }
-
-
 }
