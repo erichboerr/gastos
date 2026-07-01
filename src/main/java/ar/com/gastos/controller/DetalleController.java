@@ -366,6 +366,7 @@ public class DetalleController {
 
           new MovimientoDao().save(pago);
           new MovimientoDao().marcarPagado(m.getId()); // ← marca el egreso como pagado
+          m.setPagado(true); // ← actualiza el objeto en memoria
 
           logger.info("Pago registrado: {} - ${} - {}", m.getDescripcion(), monto, fecha);
           MovimientoEventBus.publish("pago");

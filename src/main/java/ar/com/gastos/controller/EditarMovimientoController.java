@@ -34,6 +34,8 @@ public class EditarMovimientoController {
   @FXML
   private TextField txtDescripcion;
   @FXML
+  private TextField txtComentario;
+  @FXML
   private TextField txtMonto;
   @FXML
   private Label lblCuotas;
@@ -75,6 +77,8 @@ public class EditarMovimientoController {
       // Débito recurrente o pago — mostramos la descripción
       txtDescripcion.setText(m.getDescripcion() != null ? m.getDescripcion() : "");
     }
+    // Cargamos el comentario siempre, independiente del tipo
+    txtComentario.setText(m.getComentario() != null ? m.getComentario() : "");
   }
 
   // --- Helper para mostrar/ocultar nodos ---
@@ -133,7 +137,6 @@ public class EditarMovimientoController {
         movimientoActual.setCuotas(cuotas);
 
       } else {
-        // Débito recurrente o pago — descripción libre
         String descripcion = txtDescripcion.getText().trim();
         if (descripcion.isEmpty()) {
           Toast.show(getStage(), "Debe ingresar una descripción");
@@ -141,6 +144,10 @@ public class EditarMovimientoController {
         }
         movimientoActual.setDescripcion(descripcion.toUpperCase());
       }
+
+      // Comentario — aplica siempre, independiente del tipo
+      String comentario = txtComentario.getText().trim();
+      movimientoActual.setComentario(comentario.isEmpty() ? null : comentario.toUpperCase());
 
       new MovimientoDao().update(movimientoActual);
       logger.info("Movimiento {} actualizado - id {}",

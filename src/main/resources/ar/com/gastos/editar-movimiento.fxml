@@ -27,6 +27,9 @@
     <Label text="Monto"/>
     <TextField fx:id="txtMonto" maxWidth="Infinity"/>
 
+    <Label text="Comentario (opcional)"/>
+    <TextField fx:id="txtComentario" maxWidth="Infinity"/>
+
     <Label fx:id="lblCuotas" text="Cuotas"/>
     <TextField fx:id="txtCuotas" maxWidth="Infinity"/>
 
