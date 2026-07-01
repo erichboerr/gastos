@@ -297,7 +297,7 @@ public class DetalleController {
     try {
       FXMLLoader loader = new FXMLLoader(
           getClass().getResource("/ar/com/gastos/editar-movimiento.fxml"));
-      Scene scene = new Scene(loader.load(), 400, 380);
+      Scene scene = new Scene(loader.load(), 400, 480);
       EditarMovimientoController ctrl = loader.getController();
       ctrl.setMovimiento(m);
       Stage stage = new Stage();
