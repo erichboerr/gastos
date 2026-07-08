@@ -1,0 +1,30 @@
+Pasos para compilar y ejecutar proyectos JavaFX
+1. Organización del proyecto
+    * Colocar todos los .fxml, .css, imágenes y demás recursos en:
+       src/main/resources/ar/com/gastos/
+    * En el código, cargar recursos con:
+       FXMLLoader loader = new FXMLLoader(getClass().getResource("/ar/com/gastos/archivo.fxml"));
+2. Configuración de Gradle (build.gradle.kts)
+    * Plugins recomendados:
+      plugins {
+          application
+          id("org.openjfx.javafxplugin") version "0.1.0"
+          id("com.github.johnrengelman.shadow") version "8.1.1"
+      }
+    * Configuración de JavaFX:
+      javafx {
+          version = "21.0.11"
+          modules = listOf("javafx.controls", "javafx.fxml", "javafx.web", "javafx.swing")
+      }
+    * Configuración de aplicación:
+      application {
+          mainClass.set("ar.com.gastos.NameApplication")
+      }
+    * ShadowJar ya te genera el .jar auto-contenido:
+      ./gradlew shadowJar
+      guarda la compilación en build/libs/nombreProyecto-1.0-SNAPSHOT-all.jar.
+3. Ejecución con .vbs (sin ventana negra)
+    *Crear archivo ejecutar-gastos.vbs con:
+      Set objShell = CreateObject("Wscript.Shell")
+      objShell.Run "java --module-path ""C:\javafx-sdk-21.0.11\lib"" --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing -jar ""C:\Users\Erich Desarrollo\Documents\Proyectos_JAVA\gastos\build\libs\gastos-1.0-SNAPSHOT-all.jar""", 0, True
+    *Guardar y crear acceso directo en el escritorio con ícono propio.

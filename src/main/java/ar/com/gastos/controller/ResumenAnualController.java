@@ -9,7 +9,6 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
 import java.sql.*;
 import java.text.NumberFormat;
 import java.time.LocalDate;
@@ -26,18 +25,9 @@ public class ResumenAnualController {
 
   static { CURRENCY.setMaximumFractionDigits(2); }
 
-  // --- Tab 1: Resumen mensual ---
   @FXML private Label lblAnio;
-  @FXML private TableView<FilaMes> tablaResumen;
-  @FXML private TableColumn<FilaMes, String> colMes;
-  @FXML private TableColumn<FilaMes, String> colIngresos;
-  @FXML private TableColumn<FilaMes, String> colEgresos;
-  @FXML private TableColumn<FilaMes, String> colBalance;
-  @FXML private Label lblTotalIngresos;
-  @FXML private Label lblTotalEgresos;
-  @FXML private Label lblTotalBalance;
 
-  // --- Tab 2: Por tarjeta ---
+  // --- Tab 1: Resumen Anual (Ex Tab 2) ---
   @FXML private ComboBox<String> cmbTarjeta;
   @FXML private TableView<FilaGeneral> tablaTarjeta;
   @FXML private Label lblTotTarjeta1;
@@ -45,7 +35,8 @@ public class ResumenAnualController {
   @FXML private Label lblTotTarjeta3;
   @FXML private Label lblTotTarjeta4;
 
-  // --- Tab 3: Por categoría ---
+  // --- Tab 2: Por categoría ---
+  @FXML private ComboBox<String> cmbTarjetaCategoria; // NUEVO
   @FXML private TableView<FilaCategoria> tablaCategoria;
   @FXML private TableColumn<FilaCategoria, String> colCategoria;
   @FXML private TableColumn<FilaCategoria, String> colTotalCat;
@@ -55,7 +46,6 @@ public class ResumenAnualController {
   private int anioActual;
   private List<Tarjeta> tarjetas;
 
-  // --- Entrada desde DashboardController ---
   public void cargarAnio(int anio) {
     this.anioActual = anio;
     lblAnio.setText("Resumen " + anio);
@@ -64,83 +54,37 @@ public class ResumenAnualController {
       TarjetaDao tarjetaDao = new TarjetaDao();
       tarjetas = tarjetaDao.findAllActivas();
 
-      cargarResumenMensual();
-      cargarSelectorTarjeta();
-      cargarCategoria();
+      // Inicializar selectores y tablas
+      cargarSelectorsTarjetas();
+
+      cargarTablaTarjeta("Todas");
+      cargarCategoria("Todas");
 
     } catch (Exception ex) {
       logger.error("Error al cargar resumen anual", ex);
     }
   }
 
-  // =========================================================
-  // TAB 1 — Resumen mensual
-  // =========================================================
-
-  private void cargarResumenMensual() throws Exception {
-    colMes.setCellValueFactory(new PropertyValueFactory<>("col0"));
-    colIngresos.setCellValueFactory(new PropertyValueFactory<>("col1"));
-    colEgresos.setCellValueFactory(new PropertyValueFactory<>("col2"));
-    colBalance.setCellValueFactory(new PropertyValueFactory<>("col3"));
-
-    tablaResumen.getItems().clear();
-
-    IngresoDao ingresoDao       = new IngresoDao();
-    MovimientoDao movimientoDao = new MovimientoDao();
-    CierreTarjetaDao cierreDao  = new CierreTarjetaDao();
-    CuotaDao cuotaDao           = new CuotaDao();
-    List<Ingreso> todosIngresos = ingresoDao.listarIngresos();
-
-    double sumaIngresos = 0, sumaEgresos = 0;
-
-    for (Month month : Month.values()) {
-      YearMonth ym = YearMonth.of(anioActual, month);
-
-      double ingMes = todosIngresos.stream()
-          .filter(i -> YearMonth.from(i.getFecha()).equals(ym))
-          .map(Ingreso::getMonto)
-          .mapToDouble(BigDecimal::doubleValue).sum();
-
-      double egrMes = calcularEgresosMes(ym, tarjetas, movimientoDao, cierreDao, cuotaDao);
-
-      String nombreMes = capitalizar(month.getDisplayName(TextStyle.FULL, LOCALE_ES));
-      double balMes = ingMes - egrMes;
-
-      /*tablaResumen.getItems().add(new FilaGeneral(
-          nombreMes,
-          CURRENCY.format(ingMes),
-          CURRENCY.format(egrMes),
-          CURRENCY.format(balMes), "", ""));*/
-
-      tablaResumen.getItems().add(new FilaMes(
-          nombreMes,
-          CURRENCY.format(ingMes),
-          CURRENCY.format(egrMes),
-          CURRENCY.format(balMes)
-      ));
-
-      sumaIngresos += ingMes;
-      sumaEgresos  += egrMes;
-    }
-
-    lblTotalIngresos.setText("Total ingresos: " + CURRENCY.format(sumaIngresos));
-    lblTotalEgresos .setText("Total egresos: "  + CURRENCY.format(sumaEgresos));
-    lblTotalBalance .setText("Balance anual: "  + CURRENCY.format(sumaIngresos - sumaEgresos));
-  }
-
-  // =========================================================
-  // TAB 2 — Por tarjeta
-  // =========================================================
-
-  private void cargarSelectorTarjeta() {
+  private void cargarSelectorsTarjetas() {
+    // Limpiamos y cargamos ambos combos en paralelo
     cmbTarjeta.getItems().clear();
+    cmbTarjetaCategoria.getItems().clear();
+
     cmbTarjeta.getItems().add("Todas");
+    cmbTarjetaCategoria.getItems().add("Todas");
+
     for (Tarjeta t : tarjetas) {
       cmbTarjeta.getItems().add(t.getNombre());
+      cmbTarjetaCategoria.getItems().add(t.getNombre());
     }
+
     cmbTarjeta.setValue("Todas");
-    cargarTablaTarjeta("Todas");
+    cmbTarjetaCategoria.setValue("Todas");
   }
+
+  // =========================================================
+  // TAB 1 — Resumen Anual (Ex Tab 2)
+  // =========================================================
 
   @FXML
   private void onTarjetaSeleccionada() {
@@ -160,7 +104,7 @@ public class ResumenAnualController {
       CuotaDao cuotaDao           = new CuotaDao();
 
       if ("Todas".equals(seleccion)) {
-        // Columnas: Mes | Débito | Crédito Consumo | Crédito Pago | Crédito Deuda
+        // Matriz Fija Completa: col0=Mes | col1=Débito | col2=Consumo | col3=Pago | col4=Deuda
         agregarColumna(tablaTarjeta, "Mes",             "col0", 80);
         agregarColumna(tablaTarjeta, "Débito",          "col1", 140);
         agregarColumna(tablaTarjeta, "Crédito Consumo", "col2", 160);
@@ -186,12 +130,14 @@ public class ResumenAnualController {
           double deuda = cons - pago;
           String nombreMes = capitalizar(month.getDisplayName(TextStyle.FULL, LOCALE_ES));
 
+          // Ubicación exacta en la matriz del modelo
           tablaTarjeta.getItems().add(new FilaGeneral(
               nombreMes,
               CURRENCY.format(deb),
               CURRENCY.format(cons),
               CURRENCY.format(pago),
-              CURRENCY.format(deuda), ""));
+              CURRENCY.format(deuda),
+              ""));
 
           totDeb  += deb;
           totCons += cons;
@@ -205,14 +151,13 @@ public class ResumenAnualController {
         lblTotTarjeta4.setText("Crédito Deuda: "   + CURRENCY.format(totDeuda));
 
       } else {
-        // Tarjeta específica
         Tarjeta tarjeta = tarjetas.stream()
             .filter(t -> t.getNombre().equals(seleccion))
             .findFirst().orElse(null);
         if (tarjeta == null) return;
 
         if ("DEBITO".equals(tarjeta.getTipo())) {
-          // Solo columna de gasto
+          // Débito individual usa col0 y col1
           agregarColumna(tablaTarjeta, "Mes",   "col0", 100);
           agregarColumna(tablaTarjeta, "Gasto", "col1", 200);
 
@@ -221,22 +166,22 @@ public class ResumenAnualController {
             YearMonth ym = YearMonth.of(anioActual, month);
             double gasto = calcularEgresosMesTarjeta(ym, tarjeta, movimientoDao, cierreDao, cuotaDao);
             String nombreMes = capitalizar(month.getDisplayName(TextStyle.FULL, LOCALE_ES));
+
             tablaTarjeta.getItems().add(new FilaGeneral(
                 nombreMes, CURRENCY.format(gasto), "", "", "", ""));
             totGasto += gasto;
           }
 
           lblTotTarjeta1.setText("Total gasto débito: " + CURRENCY.format(totGasto));
-          lblTotTarjeta2.setText("");
-          lblTotTarjeta3.setText("");
-          lblTotTarjeta4.setText("");
+          lblTotTarjeta2.setText(""); lblTotTarjeta3.setText(""); lblTotTarjeta4.setText("");
 
         } else {
-          // Crédito: Mes | Consumo | Pago | Deuda
+          // TARJETA CRÉDITO INDIVIDUAL (SOLUCIÓN ARQUITECTÓNICA)
+          // Forzamos a que las columnas busquen en sus posiciones inmutables de la matriz
           agregarColumna(tablaTarjeta, "Mes",     "col0", 100);
-          agregarColumna(tablaTarjeta, "Consumo", "col1", 160);
-          agregarColumna(tablaTarjeta, "Pago",    "col2", 160);
-          agregarColumna(tablaTarjeta, "Deuda",   "col3", 160);
+          agregarColumna(tablaTarjeta, "Consumo", "col2", 160); // Mapea a col2 (Consumo)
+          agregarColumna(tablaTarjeta, "Pago",    "col3", 160); // Mapea a col3 (Pago)
+          agregarColumna(tablaTarjeta, "Deuda",   "col4", 160); // Mapea a col4 (Deuda)
 
           double totCons = 0, totPago = 0;
           for (Month month : Month.values()) {
@@ -244,11 +189,17 @@ public class ResumenAnualController {
             double[] cp = calcularConsumoPagoCredito(ym, tarjeta, movimientoDao, cierreDao, cuotaDao);
             double cons = cp[0], pago = cp[1], deuda = cons - pago;
             String nombreMes = capitalizar(month.getDisplayName(TextStyle.FULL, LOCALE_ES));
+
+            // Respetamos estrictamente los índices de FilaGeneral:
+            // c0=Mes, c1=Débito (Vacío), c2=Consumo, c3=Pago, c4=Deuda
             tablaTarjeta.getItems().add(new FilaGeneral(
                 nombreMes,
-                CURRENCY.format(cons),
-                CURRENCY.format(pago),
-                CURRENCY.format(deuda), "", ""));
+                "",                    // col1 (Débito vacío)
+                CURRENCY.format(cons), // col2 (Consumo)
+                CURRENCY.format(pago), // col3 (Pago)
+                CURRENCY.format(deuda),// col4 (Deuda)
+                ""));
+
             totCons += cons;
             totPago += pago;
           }
@@ -265,35 +216,61 @@ public class ResumenAnualController {
   }
 
   // =========================================================
-  // TAB 3 — Por categoría
+  // TAB 2 — Por categoría (Dinamizada con filtro)
   // =========================================================
 
-  private void cargarCategoria() throws Exception {
+  @FXML
+  private void onTarjetaCategoriaSeleccionada() {
+    String seleccion = cmbTarjetaCategoria.getValue();
+    if (seleccion == null) return;
+    try {
+      cargarCategoria(seleccion);
+    } catch (Exception ex) {
+      logger.error("Error al filtrar categorías", ex);
+    }
+  }
+
+  private void cargarCategoria(String seleccion) throws Exception {
     colCategoria .setCellValueFactory(new PropertyValueFactory<>("categoria"));
     colTotalCat  .setCellValueFactory(new PropertyValueFactory<>("total"));
     colPorcentaje.setCellValueFactory(new PropertyValueFactory<>("porcentaje"));
 
     tablaCategoria.getItems().clear();
 
-    // Consulta directa: suma egresos de crédito agrupados por categoría del comercio
-    String sql =
+    // Base de la query SQL
+    StringBuilder sql = new StringBuilder(
         "SELECT COALESCE(co.categoria, 'Sin categoría') AS cat, " +
             "       SUM(m.monto) AS total " +
             "FROM movimiento m " +
             "JOIN comercio co ON co.id = m.comercio_id " +
             "JOIN tarjeta t ON t.id = m.tarjeta_id " +
             "WHERE m.categoria = 'EGRESO' " +
-            "  AND t.tipo != 'DEBITO' " +
-            "  AND EXTRACT(YEAR FROM m.fecha) = ? " +
-            "GROUP BY cat " +
-            "ORDER BY total DESC";
+            "  AND EXTRACT(YEAR FROM m.fecha) = ? "
+    );
+
+    // Si se selecciona una tarjeta específica, agregamos la cláusula y buscamos su ID
+    //Long tarjetaIdTarget = null;
+    if (!"Todas".equals(seleccion)) {
+      sql.append(" AND t.nombre = ? ");
+    } else {
+      // Si son todas, mantenías el comportamiento de excluir DÉBITO en tu lógica original.
+      // (Opcional: puedes quitar esta línea si quieres ver débito también en el global)
+      sql.append(" AND t.tipo != 'DEBITO' ");
+    }
+
+    sql.append("GROUP BY cat ORDER BY total DESC");
 
     Map<String, Double> mapa = new LinkedHashMap<>();
     double totalAnual = 0;
 
     try (Connection c = Db.getDataSource().getConnection();
-         PreparedStatement ps = c.prepareStatement(sql)) {
+         PreparedStatement ps = c.prepareStatement(sql.toString())) {
+
       ps.setInt(1, anioActual);
+      if (!"Todas".equals(seleccion)) {
+        ps.setString(2, seleccion);
+      }
+
       ResultSet rs = ps.executeQuery();
       while (rs.next()) {
         String cat = rs.getString("cat");
@@ -312,34 +289,22 @@ public class ResumenAnualController {
       ));
     }
 
-    lblTotalCategoria.setText("Total egresos crédito: " + CURRENCY.format(totalAnual));
+    // Adaptamos el Label inferior según el contexto del filtro
+    String txtLabel = "Todas".equals(seleccion) ? "Total egresos crédito: " : "Total egresos (" + seleccion + "): ";
+    lblTotalCategoria.setText(txtLabel + CURRENCY.format(totalAnual));
   }
 
   // =========================================================
-  // Helpers de cálculo
+  // Helpers de cálculo e infraestructura (Sin cambios)
   // =========================================================
 
-  /** Suma egresos de todas las tarjetas en un mes dado */
-  private double calcularEgresosMes(YearMonth ym, List<Tarjeta> tarjetas,
-                                    MovimientoDao movDao, CierreTarjetaDao cierreDao, CuotaDao cuotaDao) throws Exception {
-    double total = 0;
-    for (Tarjeta t : tarjetas) {
-      total += calcularEgresosMesTarjeta(ym, t, movDao, cierreDao, cuotaDao);
-    }
-    return total;
-  }
-
-  /** Suma egresos de una tarjeta en un mes dado */
   private double calcularEgresosMesTarjeta(YearMonth ym, Tarjeta t,
                                            MovimientoDao movDao, CierreTarjetaDao cierreDao, CuotaDao cuotaDao) throws Exception {
-
     CierreTarjeta cierre = cierreDao.findCierrePorMesDeCierre(t.getId(), ym);
     if (cierre == null) return 0;
 
     CierreTarjeta anterior = cierreDao.findAnteriorPorTarjeta(t.getId(), cierre.getFechaCierre());
-    LocalDate desde = (anterior != null)
-        ? anterior.getFechaCierre().plusDays(1)
-        : cierre.getMes();
+    LocalDate desde = (anterior != null) ? anterior.getFechaCierre().plusDays(1) : cierre.getMes();
     LocalDate hasta = cierre.getFechaCierre();
 
     double total = 0;
@@ -359,17 +324,13 @@ public class ResumenAnualController {
     return total;
   }
 
-  /** Retorna [consumo, pago] para una tarjeta de crédito en un mes */
   private double[] calcularConsumoPagoCredito(YearMonth ym, Tarjeta t,
                                               MovimientoDao movDao, CierreTarjetaDao cierreDao, CuotaDao cuotaDao) throws Exception {
-
     CierreTarjeta cierre = cierreDao.findCierrePorMesDeCierre(t.getId(), ym);
     if (cierre == null) return new double[]{0, 0};
 
     CierreTarjeta anterior = cierreDao.findAnteriorPorTarjeta(t.getId(), cierre.getFechaCierre());
-    LocalDate desde = (anterior != null)
-        ? anterior.getFechaCierre().plusDays(1)
-        : cierre.getMes();
+    LocalDate desde = (anterior != null) ? anterior.getFechaCierre().plusDays(1) : cierre.getMes();
     LocalDate hasta = cierre.getFechaCierre();
 
     double consumo = 0, pago = 0;
@@ -392,10 +353,6 @@ public class ResumenAnualController {
     return new double[]{consumo, pago};
   }
 
-  // =========================================================
-  // Helpers UI
-  // =========================================================
-
   @SuppressWarnings("unchecked")
   private void agregarColumna(TableView<FilaGeneral> tabla, String texto, String prop, double ancho) {
     TableColumn<FilaGeneral, String> col = new TableColumn<>(texto);
@@ -410,10 +367,9 @@ public class ResumenAnualController {
   }
 
   // =========================================================
-  // Modelos de fila
+  // Modelos de fila (Mantenidos intactos)
   // =========================================================
 
-  /** Fila genérica de hasta 6 columnas — reutilizada en Tab 1 y Tab 2 */
   public static class FilaGeneral {
     private final String col0, col1, col2, col3, col4, col5;
     public FilaGeneral(String c0, String c1, String c2, String c3, String c4, String c5) {
@@ -428,18 +384,6 @@ public class ResumenAnualController {
     public String getCol5() { return col5; }
   }
 
-  /** Mantenemos FilaMes por compatibilidad con las PropertyValueFactory del Tab 1 */
-  public static class FilaMes extends FilaGeneral {
-    public FilaMes(String mes, String ing, String egr, String bal) {
-      super(mes, ing, egr, bal, "", "");
-    }
-    public String getMes()      { return getCol0(); }
-    public String getIngresos() { return getCol1(); }
-    public String getEgresos()  { return getCol2(); }
-    public String getBalance()  { return getCol3(); }
-  }
-
-  /** Fila para Tab 3 — categorías */
   public static class FilaCategoria {
     private final String categoria, total, porcentaje;
     public FilaCategoria(String cat, String tot, String pct) {
