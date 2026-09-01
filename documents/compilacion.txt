@@ -13,7 +13,7 @@ Pasos para compilar y ejecutar proyectos JavaFX
       }
     * Configuración de JavaFX:
       javafx {
-          version = "21.0.11"
+          version = "21.0.6"
           modules = listOf("javafx.controls", "javafx.fxml", "javafx.web", "javafx.swing")
       }
     * Configuración de aplicación:
