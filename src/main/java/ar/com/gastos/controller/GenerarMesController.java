@@ -32,7 +32,13 @@ public class GenerarMesController {
   private ListView<GenerarMesItem> lstItems;
 
   @FXML
+  private DatePicker dpMesGenerar;
+
+  @FXML
   public void initialize() {
+    // El período se selecciona explícitamente para evitar generar gastos
+    // recurrentes en un mes distinto al que se está procesando.
+    dpMesGenerar.setValue(LocalDate.now().withDayOfMonth(1));
     lstItems.setCellFactory(lv -> new ListCell<>() {
 
       private final CheckBox chk = new CheckBox();
@@ -124,6 +130,13 @@ public class GenerarMesController {
 
   @FXML
   private void generarEgresos() {
+    LocalDate mesSeleccionado = dpMesGenerar.getValue();
+    if (mesSeleccionado == null) {
+      Toast.show(getStage(), "Seleccioná el mes a generar");
+      return;
+    }
+    LocalDate primerDia = mesSeleccionado.withDayOfMonth(1);
+    LocalDate ultimoDia = mesSeleccionado.withDayOfMonth(mesSeleccionado.lengthOfMonth());
     // Buscamos la tarjeta DEBITO
     Tarjeta tarjetaDebito;
     try {
@@ -160,6 +173,11 @@ public class GenerarMesController {
       LocalDate fecha = item.getFecha();
       if (fecha == null) {
         errores.add(item.getGastoRecurrente().getDescripcion() + ": fecha inválida");
+        continue;
+      }
+      if (fecha.isBefore(primerDia) || fecha.isAfter(ultimoDia)) {
+        errores.add(item.getGastoRecurrente().getDescripcion()
+            + ": la fecha debe estar dentro del mes seleccionado");
         continue;
       }
 
