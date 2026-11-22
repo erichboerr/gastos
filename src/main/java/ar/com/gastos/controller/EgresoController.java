@@ -8,6 +8,7 @@ import ar.com.gastos.model.Movimiento;
 import ar.com.gastos.model.Tarjeta;
 import ar.com.gastos.util.MovimientoEventBus;
 import ar.com.gastos.util.Toast;
+import ar.com.gastos.util.MontoParser;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -211,7 +212,7 @@ public class EgresoController {
     }
 
     try {
-      BigDecimal monto = new BigDecimal(montoStr).setScale(2);
+      BigDecimal monto = MontoParser.parse(montoStr);
       boolean esDebito = "DEBITO".equals(tarjetaSeleccionada.getTipo());
 
       if (esDebito) {

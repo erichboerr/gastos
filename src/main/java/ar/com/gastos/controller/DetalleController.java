@@ -9,6 +9,7 @@ import ar.com.gastos.model.Movimiento;
 import ar.com.gastos.model.Tarjeta;
 import ar.com.gastos.util.MovimientoEventBus;
 import ar.com.gastos.util.Toast;
+import ar.com.gastos.util.MontoParser;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -354,7 +355,7 @@ public class DetalleController {
             return;
           }
 
-          BigDecimal monto = new BigDecimal(txtMonto.getText().trim()).setScale(2);
+          BigDecimal monto = MontoParser.parse(txtMonto.getText());
 
           Movimiento pago = new Movimiento(
               tarjetaActual.getId(),

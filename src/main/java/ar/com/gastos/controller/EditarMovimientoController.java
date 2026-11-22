@@ -6,6 +6,7 @@ import ar.com.gastos.model.Comercio;
 import ar.com.gastos.model.Movimiento;
 import ar.com.gastos.util.MovimientoEventBus;
 import ar.com.gastos.util.Toast;
+import ar.com.gastos.util.MontoParser;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
@@ -113,7 +114,7 @@ public class EditarMovimientoController {
     }
 
     try {
-      BigDecimal monto = new BigDecimal(montoStr).setScale(2);
+      BigDecimal monto = MontoParser.parse(montoStr);
       movimientoActual.setFecha(dpFecha.getValue());
       movimientoActual.setMonto(monto);
 

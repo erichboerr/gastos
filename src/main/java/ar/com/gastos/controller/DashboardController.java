@@ -5,6 +5,7 @@ import ar.com.gastos.model.*;
 import ar.com.gastos.util.BackupService;
 import ar.com.gastos.util.MovimientoEventBus;
 import ar.com.gastos.util.Toast;
+import ar.com.gastos.util.MontoParser;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -473,7 +474,7 @@ public class DashboardController {
       dialog.showAndWait().ifPresent(respuesta -> {
         if (respuesta == btnConfirmar) {
           try {
-            BigDecimal monto = new BigDecimal(txtMonto.getText().trim()).setScale(2);
+          BigDecimal monto = MontoParser.parse(txtMonto.getText());
 
             // El pago se registra con la fecha de cierre del período anterior
             // así queda contabilizado en el período correcto
