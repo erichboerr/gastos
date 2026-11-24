@@ -59,6 +59,10 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
 
 }
+tasks.shadowJar {
+    // Nombre fijo del .jar, para copiarlo sin renombrar al lanzador
+    archiveFileName.set("gastos-1.0.jar")
+}
 
 tasks.withType<Test> {
     useJUnitPlatform()
@@ -70,4 +74,5 @@ jlink {
     launcher {
         name = "app"
     }
+
 }
