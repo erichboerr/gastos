@@ -20,7 +20,7 @@ import java.util.Properties;
  * .jar (no del directorio de trabajo), asi que viaja junto con la app al copiarla
  * a otra PC sin quedar atada a una unidad fija ni a un usuario.
  * Si ya existe un backup del mismo dia lo reemplaza.
- */git
+ */
 public class BackupService {
 
   private static final Logger logger = LoggerFactory.getLogger(BackupService.class);
