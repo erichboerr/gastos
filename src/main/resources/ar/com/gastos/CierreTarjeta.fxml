@@ -23,7 +23,7 @@
     <Label text="Fecha de cierre"/>
     <DatePicker fx:id="dpCierre" maxWidth="Infinity"/>
 
-    <Label text="Fecha de vencimiento"/>
+    <Label fx:id="lblFechaVencimiento" text="Fecha de vencimiento"/>
     <DatePicker fx:id="dpVencimiento" maxWidth="Infinity"/>
 
     <HBox spacing="8">

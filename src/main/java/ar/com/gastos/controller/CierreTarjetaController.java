@@ -33,6 +33,8 @@ public class CierreTarjetaController {
   @FXML
   private DatePicker dpVencimiento;
   @FXML
+  private Label lblFechaVencimiento;
+  @FXML
   private TableView<CierreTarjeta> tablaCierres;
   @FXML
   private TableColumn<CierreTarjeta, LocalDate> colMes;
@@ -53,6 +55,7 @@ public class CierreTarjetaController {
   public void initialize() {
     cargarTarjetas();
     configurarTabla();
+    actualizarCamposSegunTipo(null);
   }
 
   // --- Carga las tarjetas activas en el ComboBox ---
@@ -79,7 +82,10 @@ public class CierreTarjetaController {
     try {
       TarjetaDao dao = new TarjetaDao();
       tarjetaSeleccionada = dao.findByNombre(nombre);
-      if (tarjetaSeleccionada != null) cargarTabla();
+      if (tarjetaSeleccionada != null) {
+        actualizarCamposSegunTipo(tarjetaSeleccionada.getTipo());
+        cargarTabla();
+      }
     } catch (SQLException ex) {
       logger.error("Error al buscar tarjeta", ex);
     }
@@ -167,7 +173,10 @@ public class CierreTarjetaController {
     LocalDate cierre = dpCierre.getValue();
     LocalDate vencimiento = dpVencimiento.getValue();
 
-    if (tarjetaNombre == null || mes == null || cierre == null || vencimiento == null) {
+    boolean esDebito = esDebitoOEfectivo(tarjetaSeleccionada);
+
+    if (tarjetaNombre == null || mes == null || cierre == null
+        || (!esDebito && vencimiento == null)) {
       Toast.show(getStage(), "Debe completar todos los campos");
       return;
     }
@@ -178,14 +187,20 @@ public class CierreTarjetaController {
       return;
     }
 
-// Validación: el vencimiento debe ser posterior al cierre
-    if (!vencimiento.isAfter(cierre)) {
+    // Débito y efectivo representan el período completo del mes. La base
+    // conserva una fecha de vencimiento por compatibilidad, usando el cierre.
+    if (esDebito) {
+      vencimiento = cierre;
+    }
+
+    // En crédito el vencimiento debe ser posterior al cierre.
+    if (!esDebito && !vencimiento.isAfter(cierre)) {
       Toast.show(getStage(), "La fecha de vencimiento debe ser posterior a la fecha de cierre");
       return;
     }
 
-// Validación: el vencimiento debe ser del mes siguiente al cierre
-    if (vencimiento.getMonthValue() == cierre.getMonthValue()
+    // Esta regla solo corresponde a tarjetas de crédito.
+    if (!esDebito && vencimiento.getMonthValue() == cierre.getMonthValue()
         && vencimiento.getYear() == cierre.getYear()) {
       Toast.show(getStage(), "La fecha de vencimiento debe ser del mes siguiente al cierre");
       return;
@@ -228,6 +243,21 @@ public class CierreTarjetaController {
     dpMes.setValue(c.getMes());
     dpCierre.setValue(c.getFechaCierre());
     dpVencimiento.setValue(c.getFechaVencimiento());
+  }
+
+  private void actualizarCamposSegunTipo(String tipo) {
+    boolean esDebito = tipo != null && ("DEBITO".equalsIgnoreCase(tipo)
+        || "EFECTIVO".equalsIgnoreCase(tipo));
+    lblFechaVencimiento.setManaged(!esDebito);
+    lblFechaVencimiento.setVisible(!esDebito);
+    dpVencimiento.setManaged(!esDebito);
+    dpVencimiento.setVisible(!esDebito);
+    colFechaVenc.setVisible(!esDebito);
+  }
+
+  private boolean esDebitoOEfectivo(Tarjeta tarjeta) {
+    return tarjeta != null && ("DEBITO".equalsIgnoreCase(tarjeta.getTipo())
+        || "EFECTIVO".equalsIgnoreCase(tarjeta.getTipo()));
   }
 
   // --- Eliminar con confirmación ---

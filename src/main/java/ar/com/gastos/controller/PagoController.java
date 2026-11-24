@@ -6,6 +6,7 @@ import ar.com.gastos.model.Movimiento;
 import ar.com.gastos.model.Tarjeta;
 import ar.com.gastos.util.MovimientoEventBus;
 import ar.com.gastos.util.Toast;
+import ar.com.gastos.util.MontoParser;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
@@ -86,7 +87,7 @@ public class PagoController {
         return;
       }
 
-      BigDecimal monto = new BigDecimal(txtMonto.getText()).setScale(2);
+      BigDecimal monto = MontoParser.parse(txtMonto.getText());
 
       // Constructor de PAGO — sin comercio_id, con descripción libre
       Movimiento movimiento = new Movimiento(

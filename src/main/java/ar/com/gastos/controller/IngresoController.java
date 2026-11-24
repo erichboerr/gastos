@@ -4,6 +4,7 @@ import ar.com.gastos.dao.IngresoDao;
 import ar.com.gastos.model.Ingreso;
 import ar.com.gastos.util.MovimientoEventBus;
 import ar.com.gastos.util.Toast;
+import ar.com.gastos.util.MontoParser;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -181,7 +182,7 @@ public class IngresoController {
     }
 
     try {
-      BigDecimal monto = new BigDecimal(montoStr).setScale(2);
+      BigDecimal monto = MontoParser.parse(montoStr);
       IngresoDao dao = new IngresoDao();
 
       if (idEditando == -1) {

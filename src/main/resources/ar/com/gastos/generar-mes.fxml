@@ -13,6 +13,9 @@
 
     <Separator/>
 
+    <Label text="Mes a generar"/>
+    <DatePicker fx:id="dpMesGenerar" maxWidth="Infinity"/>
+
     <!-- Lista de recurrentes — fecha y monto por ítem -->
     <Label text="Seleccioná los gastos a generar"/>
     <ListView fx:id="lstItems" prefHeight="300"/>
