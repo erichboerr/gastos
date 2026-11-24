@@ -44,3 +44,5 @@ bin/
 
 config.properties
 src/main/resources/ar/com/gastos/config.properties
+# Backups de la base de datos (contienen datos personales)
+backups/
