@@ -1,12 +1,10 @@
 package ar.com.gastos.util;
 
-import ar.com.gastos.util.Db;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -17,9 +15,12 @@ import java.util.Properties;
 
 /**
  * Servicio de backup de la base de datos usando pg_dump.
- * La carpeta destino se configura en config.properties (backup.dir).
- * Si ya existe un backup del mismo día lo reemplaza.
- */
+ * La carpeta destino se configura en config.properties (backup.dir), y se resuelve
+ * con ConfigLoader.resolverBackupDir(): si es una ruta relativa, queda al lado del
+ * .jar (no del directorio de trabajo), asi que viaja junto con la app al copiarla
+ * a otra PC sin quedar atada a una unidad fija ni a un usuario.
+ * Si ya existe un backup del mismo dia lo reemplaza.
+ */git
 public class BackupService {
 
   private static final Logger logger = LoggerFactory.getLogger(BackupService.class);
@@ -27,35 +28,33 @@ public class BackupService {
 
   /**
    * Ejecuta pg_dump y guarda el resultado en la carpeta configurada.
-   * Retorna el path del archivo generado o lanza excepción si falla.
+   * Retorna el path del archivo generado o lanza excepcion si falla.
    */
   public static String ejecutarBackup() throws Exception {
 
-    // Leemos la configuración
-    Properties props = cargarProperties();
-    String backupDir = props.getProperty("backup.dir");
-    String dbUrl = props.getProperty("db.url");
-    String dbUser = props.getProperty("db.user");
-    String dbPass = props.getProperty("db.password");
+    // Antes: BackupService leia su propia copia de config.properties SOLO desde el classpath
+    // (el archivo empaquetado dentro del .jar al compilar), completamente distinta de la logica
+    // de Db.java. Ahora ambos usan ConfigLoader, con el mismo orden de busqueda.
+    Properties props = ConfigLoader.cargarConfiguracion();
+    String dbUrl = ConfigLoader.requerido(props, "db.url");
+    String dbUser = ConfigLoader.requerido(props, "db.user");
+    String dbPass = ConfigLoader.requerido(props, "db.password");
 
-    if (backupDir == null || backupDir.isBlank()) {
-      throw new Exception("No está configurada la carpeta de backup (backup.dir) en config.properties");
-    }
-
-    // Extraemos el nombre de la DB de la URL — ej: jdbc:postgresql://localhost:5432/gastos → gastos
+    // Extraemos el nombre de la DB de la URL - ej: jdbc:postgresql://localhost:5432/gastos -> gastos
     String dbName = dbUrl.substring(dbUrl.lastIndexOf("/") + 1);
 
-    // Creamos la carpeta si no existe
-    Path dirPath = Paths.get(backupDir);
+    // Resuelve la carpeta de backups: si backup.dir es relativo (o no esta definido),
+    // queda al lado del .jar; si es absoluto, se respeta tal cual.
+    Path dirPath = ConfigLoader.resolverBackupDir(props);
     if (!Files.exists(dirPath)) {
       Files.createDirectories(dirPath);
-      logger.info("Carpeta de backup creada: {}", backupDir);
+      logger.info("Carpeta de backup creada: {}", dirPath);
     }
 
-    // Nombre del archivo — un backup por día, se reemplaza si ya existe
+    // Nombre del archivo - un backup por dia, se reemplaza si ya existe
     String fecha = LocalDate.now().format(DATE_FMT);
     String fileName = "gastos_backup_" + fecha + ".sql";
-    String filePath = backupDir + File.separator + fileName;
+    String filePath = dirPath.resolve(fileName).toString();
 
     // Armamos el comando pg_dump
     ProcessBuilder pb = new ProcessBuilder(
@@ -65,40 +64,36 @@ public class BackupService {
         "-d", dbName,
         "-f", filePath,
         "--no-password",
-        "--clean",        // ← incluye DROP antes de cada CREATE en el .sql
-        "--if-exists"     // ← no falla si el objeto no existe al borrar
+        "--clean",        // incluye DROP antes de cada CREATE en el .sql
+        "--if-exists"     // no falla si el objeto no existe al borrar
     );
 
-    // Pasamos la contraseña via variable de entorno para no exponerla en el proceso
+    // Pasamos la contrasena via variable de entorno para no exponerla en el proceso
     pb.environment().put("PGPASSWORD", dbPass);
     pb.redirectErrorStream(true);
 
     logger.info("Ejecutando backup: {}", fileName);
-    Process process = pb.start();
+    Process process;
+    try {
+      process = pb.start();
+    } catch (IOException e) {
+      // Este es el error tipico cuando pg_dump no esta en el PATH de la PC nueva.
+      throw new Exception(
+          "No se pudo ejecutar pg_dump. Verifica que la carpeta bin de PostgreSQL "
+              + "este agregada al PATH del sistema en esta PC. Detalle: " + e.getMessage(), e);
+    }
 
     // Capturamos la salida por si hay errores
     String output = new String(process.getInputStream().readAllBytes());
     int exitCode = process.waitFor();
 
     if (exitCode != 0) {
-      logger.error("pg_dump falló con código {}: {}", exitCode, output);
-      throw new Exception("pg_dump falló: " + output);
+      logger.error("pg_dump fallo con codigo {}: {}", exitCode, output);
+      throw new Exception("pg_dump fallo: " + output);
     }
 
     logger.info("Backup completado: {}", filePath);
     return filePath;
-  }
-
-  // --- Lee el config.properties desde el classpath ---
-
-  private static Properties cargarProperties() throws Exception {
-    Properties props = new Properties();
-    try (InputStream is = BackupService.class.getResourceAsStream(
-        "/ar/com/gastos/config.properties")) {
-      if (is == null) throw new Exception("No se encontró config.properties");
-      props.load(is);
-    }
-    return props;
   }
 
   /**
@@ -108,10 +103,10 @@ public class BackupService {
    */
   public static void restaurarBackup(String filePath) throws Exception {
 
-    Properties props = cargarProperties();
-    String dbUrl = props.getProperty("db.url");
-    String dbUser = props.getProperty("db.user");
-    String dbPass = props.getProperty("db.password");
+    Properties props = ConfigLoader.cargarConfiguracion();
+    String dbUrl = ConfigLoader.requerido(props, "db.url");
+    String dbUser = ConfigLoader.requerido(props, "db.user");
+    String dbPass = ConfigLoader.requerido(props, "db.password");
     String dbName = dbUrl.substring(dbUrl.lastIndexOf("/") + 1);
 
     // Verificamos que el archivo existe
@@ -119,8 +114,7 @@ public class BackupService {
       throw new Exception("El archivo de backup no existe: " + filePath);
     }
 
-    // Primero dropeamos y recreamos la DB para limpiar todo
-    // Usamos --clean en psql que borra objetos antes de crearlos
+    // Usamos --clean/--if-exists (ya incluido en el .sql generado) para limpiar antes de recrear
     ProcessBuilder pb = new ProcessBuilder(
         "psql",
         "-U", dbUser,
@@ -134,38 +128,40 @@ public class BackupService {
     pb.redirectErrorStream(true);
 
     logger.info("Restaurando backup: {}", filePath);
-    Process process = pb.start();
+    Process process;
+    try {
+      process = pb.start();
+    } catch (IOException e) {
+      throw new Exception(
+          "No se pudo ejecutar psql. Verifica que la carpeta bin de PostgreSQL "
+              + "este agregada al PATH del sistema en esta PC. Detalle: " + e.getMessage(), e);
+    }
 
     String output = new String(process.getInputStream().readAllBytes());
     int exitCode = process.waitFor();
 
     if (exitCode != 0) {
-      logger.error("psql falló con código {}: {}", exitCode, output);
+      logger.error("psql fallo con codigo {}: {}", exitCode, output);
       throw new Exception("Error al restaurar: " + output);
     }
 
-    logger.info("Restauración completada desde: {}", filePath);
+    logger.info("Restauracion completada desde: {}", filePath);
   }
 
   /**
    * Lista todos los archivos .sql de backup en la carpeta configurada,
-   * ordenados por fecha descendente (el más reciente primero).
+   * ordenados por fecha descendente (el mas reciente primero).
    */
   public static List<File> listarBackups() throws Exception {
-    Properties props = cargarProperties();
-    String backupDir = props.getProperty("backup.dir");
+    Properties props = ConfigLoader.cargarConfiguracion();
+    Path dirPath = ConfigLoader.resolverBackupDir(props);
 
-    if (backupDir == null || backupDir.isBlank()) {
-      throw new Exception("No está configurada la carpeta de backup en config.properties");
-    }
-
-    Path dirPath = Paths.get(backupDir);
     if (!Files.exists(dirPath)) return new java.util.ArrayList<>();
 
     return Files.list(dirPath)
         .filter(p -> p.toString().endsWith(".sql"))
         .map(Path::toFile)
-        .sorted((a, b) -> b.getName().compareTo(a.getName())) // más reciente primero
+        .sorted((a, b) -> b.getName().compareTo(a.getName())) // mas reciente primero
         .collect(java.util.stream.Collectors.toList());
   }
 }
